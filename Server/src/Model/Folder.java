@@ -3,24 +3,45 @@ package Model;
 import Enums.FileType;
 
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Folder extends Filesystem {
-    private HashMap<FileType, ArrayList<? extends Filesystem>> filesystemArray;
+    private ArrayList<Folder> folders = new ArrayList<>();
+    private ArrayList<CFile> files = new ArrayList<>();
 
-    public Folder(String name, String pathFromRoot, ArrayList<Folder> folders, ArrayList<File> files) {
-        super(name, pathFromRoot);
-        filesystemArray = new HashMap<>();
-        filesystemArray.put(FileType.FILE, files);
-        filesystemArray.put(FileType.FOLDER, folders);
+    public Folder(File file) {
+        super(file, FileType.FOLDER);
+
+        File [] subfolders = file.listFiles(File::isDirectory);
+        File [] files = file.listFiles(File::isFile);
+
+        if (subfolders != null) {
+            for (File subfolder: subfolders){
+                folders.add(new Folder(subfolder));
+            }
+        }
+
+        if (files != null) {
+            for (File subfile: files){
+                this.files.add(new CFile(subfile));
+            }
+        }
     }
 
-    public ArrayList<Folder> getFolders(){
-        return ((ArrayList<Folder>) filesystemArray.get(FileType.FOLDER));
+    public void listAllFolders(){
+        super.printName();
+        for (Folder folder: folders){
+            folder.listAllFolders();
+        }
     }
 
-    public ArrayList<File> getFiles() {
-        return ((ArrayList<File>) filesystemArray.get(FileType.FILE));
+    public void listAllFiles(){
+        for (CFile file: files){
+            file.printName();
+        }
     }
+
 }

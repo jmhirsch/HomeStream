@@ -1,5 +1,9 @@
 package Controller;
 
+import Model.Folder;
+
+import java.io.File;
+
 public class Controller {
 
     private String currentPath;
@@ -11,6 +15,9 @@ public class Controller {
 
     public void processFileChooserInput(String path){
         currentPath = path;
+        Folder root = new Folder(new File(path));
+        //root.listAllFolders();
+        root.listAllFiles();
     }
 
     public void startServerService(){

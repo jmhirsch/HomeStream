@@ -1,29 +1,32 @@
 package Model;
 
-import java.nio.file.FileSystem;
+import Enums.FileType;
+
+import java.io.File;
+import java.nio.file.*;
 
 public abstract class Filesystem {
-    public String name;
-    public String pathFromRoot;
+    private final File file;
+    private final FileType type;
 
-    public Filesystem(String name, String pathFromRoot){
-        this.name = name;
-        this.pathFromRoot = pathFromRoot;
+    public Filesystem(File file, FileType type){
+       this.file = file;
+        this.type = type;
     }
 
     public void printName(){
-        System.out.println(name);
+        System.out.println(file);
     }
 
     public void printPath(){
         printPath();
     }
 
-    public String getName() {
-        return name;
+    public File getFile() {
+        return file;
     }
 
-    public String getPathFromRoot() {
-        return pathFromRoot;
+    public FileType type(){
+        return type;
     }
 }
