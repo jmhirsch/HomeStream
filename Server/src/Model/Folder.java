@@ -13,7 +13,7 @@ public class Folder extends Filesystem {
         super(name, pathFromRoot);
         filesystemArray = new HashMap<>();
         filesystemArray.put(FileType.FILE, files);
-        filesystemArray.put(FileType.FOLDER, folders;
+        filesystemArray.put(FileType.FOLDER, folders);
     }
 
     public ArrayList<Folder> getFolders(){
