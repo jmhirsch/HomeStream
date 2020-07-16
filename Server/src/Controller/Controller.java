@@ -12,6 +12,7 @@ public class Controller {
 
     private String currentPath;
     private int portNum;
+    private ServerService serverService;
 
     public Controller(){
         currentPath = "";
@@ -28,17 +29,17 @@ public class Controller {
     public void startServerService(int portNum, Function<Boolean, Void> callback){
         if (!currentPath.equals("")){ // ensure a folder is actually selected
             this.portNum = portNum;
-            ServerService serverService = new ServerService(portNum);
+            serverService = new ServerService(portNum);
             serverService.startServer(this::displayMessage);
             callback.apply(true);
         }
-
     }
 
 
 
     public void stopServerService(Function<Boolean, Void> callback){
-        //stop Server
+        serverService.exit();
+        serverService = null;
         callback.apply(false);
     }
 

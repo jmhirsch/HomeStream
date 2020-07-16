@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.function.Function;
@@ -15,6 +16,7 @@ public class ServerService {
     private DataInputStream in;
 
     private int socketNum;
+    private Thread serverThread;
 
 
 
@@ -22,7 +24,6 @@ public class ServerService {
         this.socketNum = socketNum;
 
     }
-
 
     public void startServer(Function<String, Void> callback){
 
@@ -49,8 +50,10 @@ public class ServerService {
                 }
                 finally {
                     try {
+                        server.close();
                         socket.close();
                         in.close();
+                        System.out.println("Exited Server");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -58,7 +61,19 @@ public class ServerService {
             }
         };
 
-        new Thread(runnable).start();
+        serverThread = new Thread(runnable);
+        serverThread.start();
+    }
 
+    public void exit() {
+        serverThread.interrupt();
+        try {
+            server.close();
+        } catch (IOException e) {
+
+        }
+        finally {
+            System.out.println("Server Closed");
+        }
     }
 }
