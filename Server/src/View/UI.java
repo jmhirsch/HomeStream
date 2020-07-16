@@ -63,9 +63,6 @@ public class UI extends JFrame {
             }
         });
 
-
-
-
         contentPane.setLayout(new FlowLayout());
         contentPane.add(new JLabel("Port: (xxxx)"));
         contentPane.add(portNumField);
