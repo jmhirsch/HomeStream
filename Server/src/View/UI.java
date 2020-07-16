@@ -9,28 +9,53 @@ import java.awt.event.ActionListener;
 
 public class UI extends JFrame {
 
-private final Controller controller;
+    private final JButton startButton;
+    private final JButton stopButton;
+    private final JButton rootFolderChooserButton;
+    private final JTextField portNumField;
+
+
+
+    private final Controller controller;
     public UI(Controller controller){
         this.controller = controller;
 
         Container contentPane = getContentPane();
 
-        JButton startButton = new JButton("Start Service");
+        portNumField = new JTextField("3004");
+
+
+        startButton = new JButton("Start Service");
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.startServerService();
-            }
-        });
-        JButton stopButton = new JButton("Stop Service");
-        stopButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                controller.stopServerService();
+
+                String portNumText = portNumField.getText();
+                int portNum = 0;
+                if (portNumText.trim().length() != 4){
+                    invalidPortNum(portNumField);
+                }
+                try{
+                    portNum = Integer.parseInt(portNumText);
+                }catch(NumberFormatException exception){
+                    invalidPortNum(portNumField);
+                    return;
+                }
+
+                startService(portNum);
             }
         });
 
-        JButton rootFolderChooserButton = new JButton("Choose Root Folder");
+        stopButton = new JButton("Stop Service");
+        stopButton.setEnabled(false);
+        stopButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                stopService();
+            }
+        });
+
+        rootFolderChooserButton = new JButton("Choose Root Folder");
         rootFolderChooserButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -39,7 +64,11 @@ private final Controller controller;
         });
 
 
+
+
         contentPane.setLayout(new FlowLayout());
+        contentPane.add(new JLabel("Port: (xxxx)"));
+        contentPane.add(portNumField);
         contentPane.add(startButton);
         contentPane.add(stopButton);
         contentPane.add(rootFolderChooserButton);
@@ -47,6 +76,33 @@ private final Controller controller;
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
+    }
+
+
+    public void startService(int portNum){
+        controller.startServerService(portNum, this::toggleService);
+    }
+
+    private void stopService(){
+        controller.stopServerService(this::toggleService);
+    }
+
+    private boolean toggleService(boolean toggle) {
+        if (toggle){
+            startButton.setText("Running...");
+        }else{
+            startButton.setText("Start Service");
+        }
+        startButton.setEnabled(!toggle);
+        stopButton.setEnabled(toggle);
+        portNumField.setEnabled(!toggle);
+        return toggle;
+    }
+
+    private void invalidPortNum(JTextField portNumField) {
+        portNumField.grabFocus();
+        portNumField.selectAll();
+        return;
     }
 
 
