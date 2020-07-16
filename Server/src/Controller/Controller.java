@@ -1,8 +1,10 @@
 package Controller;
 
 import Model.Folder;
+import ServerService.ServerService;
 import View.UI;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.function.Function;
 
@@ -23,17 +25,26 @@ public class Controller {
         root.listAllFiles();
     }
 
-    public void startServerService(int portNum, Function<Boolean, Boolean> callback){
+    public void startServerService(int portNum, Function<Boolean, Void> callback){
         if (!currentPath.equals("")){ // ensure a folder is actually selected
             this.portNum = portNum;
-            //start server
-
+            ServerService serverService = new ServerService(portNum);
+            serverService.startServer(this::displayMessage);
+            callback.apply(true);
         }
-        callback.apply(true);
+
     }
 
-    public void stopServerService(Function<Boolean, Boolean> callback){
+
+
+    public void stopServerService(Function<Boolean, Void> callback){
         //stop Server
         callback.apply(false);
+    }
+
+    private Void displayMessage(String message){
+        System.out.println(message);
+
+        return null;
     }
 }

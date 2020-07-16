@@ -73,6 +73,7 @@ public class UI extends JFrame {
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
 
@@ -84,7 +85,7 @@ public class UI extends JFrame {
         controller.stopServerService(this::toggleService);
     }
 
-    private boolean toggleService(boolean toggle) {
+    private Void toggleService(boolean toggle) {
         if (toggle){
             startButton.setText("Running...");
         }else{
@@ -93,7 +94,7 @@ public class UI extends JFrame {
         startButton.setEnabled(!toggle);
         stopButton.setEnabled(toggle);
         portNumField.setEnabled(!toggle);
-        return toggle;
+        return null;
     }
 
     private void invalidPortNum(JTextField portNumField) {
