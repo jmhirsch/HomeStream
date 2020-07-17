@@ -1,78 +1,41 @@
 package ServerService;
 
-import javax.swing.*;
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
+import Controller.Controller;
+import com.sun.net.httpserver.HttpServer;
+
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.util.function.Function;
+
 
 public class ServerService {
 
-    private ServerSocket server;
-    private Socket socket;
-    private DataInputStream in;
-
-    private int socketNum;
-    private Thread serverThread;
+    private InetSocketAddress address;
+    private HttpServer server;
 
 
 
     public ServerService(int socketNum){
-        this.socketNum = socketNum;
+        address = new InetSocketAddress(socketNum);
 
     }
 
-    public void startServer(Function<String, Void> callback){
-
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    server = new ServerSocket(socketNum);
-
-                    System.out.println("Server Started");
-
-                    socket = server.accept();
-                    in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-
-                    String line = "";
-
-                    while(!line.equals("exit")){
-                        line = in.readUTF();
-                        callback.apply(line);
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                finally {
-                    try {
-                        server.close();
-                        socket.close();
-                        in.close();
-                        System.out.println("Exited Server");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        };
-
-        serverThread = new Thread(runnable);
-        serverThread.start();
+    public void startServer(Function <String, Void> callback){
+        try {
+            server = HttpServer.create(address, 0);
+            server.createContext("/hithere", Controller.getHandler());
+            server.setExecutor(null);
+            server.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } {
+        }
     }
 
     public void exit() {
-        serverThread.interrupt();
         try {
-            server.close();
-        } catch (IOException e) {
-
-        }
-        finally {
+            server.stop(0);
+        } finally {
             System.out.println("Server Closed");
         }
     }

@@ -2,10 +2,15 @@ package Controller;
 
 import Model.Folder;
 import ServerService.ServerService;
-import View.UI;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpsServer;
+import org.json.JSONObject;
 
-import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.function.Function;
 
 public class Controller {
@@ -13,6 +18,7 @@ public class Controller {
     private String currentPath;
     private int portNum;
     private ServerService serverService;
+    private Folder root;
 
     public Controller(){
         currentPath = "";
@@ -21,7 +27,7 @@ public class Controller {
 
     public void processFileChooserInput(String path){
         currentPath = path;
-        Folder root = new Folder(new File(path));
+        Folder root = new Folder(new File(path), "");
         //root.listAllFolders();
         root.listAllFiles();
     }
@@ -47,5 +53,36 @@ public class Controller {
         System.out.println(message);
 
         return null;
+    }
+
+
+    public void createContexts(HttpsServer server){
+        server.createContext(root.getPathFromRoot(), new MyHandler(root));
+    }
+
+     class MyHandler implements HttpHandler {
+
+
+        private final Folder folder;
+
+        public MyHandler(Folder folder){
+            this.folder = folder;
+        }
+
+         @Override
+        public void handle(HttpExchange t) throws IOException {
+            InputStream is = t.getRequestBody();
+            String s = is.readAllBytes().toString();
+            System.out.println(t.getRequestURI());
+            System.out.println();
+            JSONObject msg = new JSONObject();
+            msg.put("message", folder.getPathFromRoot());
+            String response2 = msg.toString();
+            System.out.println(msg);
+            t.sendResponseHeaders(200, response2.getBytes().length);
+            OutputStream os = t.getResponseBody();
+            os.write(response2.getBytes());
+            os.close();
+        }
     }
 }
