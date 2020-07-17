@@ -1,6 +1,5 @@
 package ServerService;
 
-import Controller.Controller;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -13,19 +12,19 @@ public class ServerService {
     private InetSocketAddress address;
     private HttpServer server;
 
-
-
     public ServerService(int socketNum){
         address = new InetSocketAddress(socketNum);
 
     }
 
-    public void startServer(Function <String, Void> callback){
+    public void startServer(Function <HttpServer, Void> contextCreator){
         try {
             server = HttpServer.create(address, 0);
-            server.createContext("/hithere", Controller.getHandler());
+            contextCreator.apply(server);
+
             server.setExecutor(null);
             server.start();
+            System.out.println("Server started");
         } catch (IOException e) {
             e.printStackTrace();
         } {

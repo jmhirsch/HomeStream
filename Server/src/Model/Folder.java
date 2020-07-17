@@ -1,6 +1,7 @@
 package Model;
 
 import Enums.FileType;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -36,6 +37,26 @@ public class Folder extends Filesystem {
         for (Folder folder: folders){
             folder.listAllFolders();
         }
+    }
+
+    public ArrayList<String> getTopLevelFolderNames(){
+        ArrayList<String> folderNames = new ArrayList<>();
+
+        for (Folder folder: folders){
+            folderNames.add(folder.getFile().getName());
+        }
+        return folderNames;
+    }
+
+    public JSONObject getJSONTopLevelFolders(){
+        JSONObject items = new JSONObject();
+        items.put("subfolders", getTopLevelFolderNames());
+        System.out.println("got items");
+        return items;
+    }
+
+    public ArrayList<Folder> getFolders() {
+        return folders;
     }
 
     public void listAllFiles(){

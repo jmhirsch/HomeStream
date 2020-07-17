@@ -4,7 +4,7 @@ import Model.Folder;
 import ServerService.ServerService;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpsServer;
+import com.sun.net.httpserver.HttpServer;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -27,7 +27,7 @@ public class Controller {
 
     public void processFileChooserInput(String path){
         currentPath = path;
-        Folder root = new Folder(new File(path), "");
+        root = new Folder(new File(path), "");
         //root.listAllFolders();
         root.listAllFiles();
     }
@@ -36,11 +36,10 @@ public class Controller {
         if (!currentPath.equals("")){ // ensure a folder is actually selected
             this.portNum = portNum;
             serverService = new ServerService(portNum);
-            serverService.startServer(this::displayMessage);
+            serverService.startServer(this::createContexts);
             callback.apply(true);
         }
     }
-
 
 
     public void stopServerService(Function<Boolean, Void> callback){
@@ -49,18 +48,16 @@ public class Controller {
         callback.apply(false);
     }
 
-    private Void displayMessage(String message){
-        System.out.println(message);
+    public Void createContexts(HttpServer server){
+        server.createContext("/", new MyHandler(root));
 
+        for (Folder folder: root.getFolders()){
+            server.createContext("/" + folder.getFile().getName(), new MyHandler(folder));
+        }
         return null;
     }
 
-
-    public void createContexts(HttpsServer server){
-        server.createContext(root.getPathFromRoot(), new MyHandler(root));
-    }
-
-     class MyHandler implements HttpHandler {
+    static class MyHandler implements HttpHandler {
 
 
         private final Folder folder;
@@ -72,16 +69,16 @@ public class Controller {
          @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String s = is.readAllBytes().toString();
-            System.out.println(t.getRequestURI());
-            System.out.println();
-            JSONObject msg = new JSONObject();
-            msg.put("message", folder.getPathFromRoot());
-            String response2 = msg.toString();
-            System.out.println(msg);
-            t.sendResponseHeaders(200, response2.getBytes().length);
+
+            JSONObject response = new JSONObject();
+            response.put("message", folder.getPathFromRoot());
+            response.put("folders", folder.getJSONTopLevelFolders());
+            System.out.println(response.toString());
+
+
+            t.sendResponseHeaders(200, response.toString().getBytes().length);
             OutputStream os = t.getResponseBody();
-            os.write(response2.getBytes());
+            os.write(response.toString().getBytes());
             os.close();
         }
     }
