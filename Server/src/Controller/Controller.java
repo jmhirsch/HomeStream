@@ -9,7 +9,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.function.Function;
 
@@ -48,13 +47,20 @@ public class Controller {
         callback.apply(false);
     }
 
-    public Void createContexts(HttpServer server){
+    private Void createContexts(HttpServer server){
         server.createContext("/", new MyHandler(root));
 
         for (Folder folder: root.getFolders()){
-            server.createContext("/" + folder.getFile().getName(), new MyHandler(folder));
+            createContexts(server, folder);
         }
         return null;
+    }
+
+    private void createContexts(HttpServer server, Folder folder){
+        server.createContext("/" + folder.getFile().getName(), new MyHandler(folder));
+        for (Folder subFolder: folder.getFolders()){
+           createContexts(server, subFolder);
+        }
     }
 
     static class MyHandler implements HttpHandler {
@@ -68,11 +74,12 @@ public class Controller {
 
          @Override
         public void handle(HttpExchange t) throws IOException {
-            InputStream is = t.getRequestBody();
-
             JSONObject response = new JSONObject();
-            response.put("message", folder.getPathFromRoot());
+            response.put("message", "a message");
+            response.put("currentFolder", folder.getFile().getName());
+            response.put("path", folder.getPathFromRoot());
             response.put("folders", folder.getJSONTopLevelFolders());
+            response.put("files", folder.getJSONFiles());
             System.out.println(response.toString());
 
 

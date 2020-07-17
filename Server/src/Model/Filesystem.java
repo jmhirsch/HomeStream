@@ -3,9 +3,8 @@ package Model;
 import Enums.FileType;
 
 import java.io.File;
-import java.nio.file.*;
 
-public abstract class Filesystem {
+public abstract class Filesystem implements Comparable<Filesystem>{
     private final File file;
     private final FileType type;
 
@@ -28,5 +27,9 @@ public abstract class Filesystem {
 
     public FileType type(){
         return type;
+    }
+
+    public int compareTo(Filesystem f2){
+        return this.getFile().getName().compareToIgnoreCase(f2.getFile().getName());
     }
 }

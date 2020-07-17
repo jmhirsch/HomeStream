@@ -5,6 +5,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Folder extends Filesystem {
     private ArrayList<Folder> folders = new ArrayList<>();
@@ -27,9 +28,14 @@ public class Folder extends Filesystem {
 
         if (files != null) {
             for (File subfile: files){
-                this.files.add(new CFile(subfile));
+                if (!subfile.getName().startsWith(".")) {
+                    this.files.add(new CFile(subfile));
+                }
             }
         }
+
+        Collections.sort(folders);
+        Collections.sort(this.files);
     }
 
     public void listAllFolders(){
@@ -39,7 +45,7 @@ public class Folder extends Filesystem {
         }
     }
 
-    public ArrayList<String> getTopLevelFolderNames(){
+    private ArrayList<String> getTopLevelFolderNames(){
         ArrayList<String> folderNames = new ArrayList<>();
 
         for (Folder folder: folders){
@@ -48,10 +54,26 @@ public class Folder extends Filesystem {
         return folderNames;
     }
 
+    private ArrayList<String> getFileNames(){
+
+        ArrayList<String> fileNames = new ArrayList<>();
+
+        for (CFile file: files){
+            fileNames.add(file.getFile().getName());
+        }
+        return fileNames;
+    }
+
     public JSONObject getJSONTopLevelFolders(){
         JSONObject items = new JSONObject();
         items.put("subfolders", getTopLevelFolderNames());
         System.out.println("got items");
+        return items;
+    }
+
+    public JSONObject getJSONFiles(){
+        JSONObject items = new JSONObject();
+        items.put("files", getFileNames());
         return items;
     }
 
@@ -68,5 +90,4 @@ public class Folder extends Filesystem {
     public String getPathFromRoot(){
         return pathFromRoot;
     }
-
 }
