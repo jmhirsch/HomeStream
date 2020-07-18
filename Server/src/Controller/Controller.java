@@ -26,7 +26,7 @@ public class Controller {
 
     public void processFileChooserInput(String path){
         currentPath = path;
-        root = new Folder(new File(path), "");
+        root = new Folder(new File(path), "", true);
         //root.listAllFolders();
         root.listAllFiles();
     }
@@ -57,10 +57,21 @@ public class Controller {
     }
 
     private void createContexts(HttpServer server, Folder folder){
-        server.createContext("/" + folder.getFile().getName(), new MyHandler(folder));
+        //server.createContext("/" + folder.getFile().getName(), new MyHandler(folder));
+        server.createContext(folder.getPathFromRoot(), new MyHandler(folder));
         for (Folder subFolder: folder.getFolders()){
            createContexts(server, subFolder);
         }
+    }
+
+    private static JSONObject getResponse(Folder folder){
+        JSONObject response = new JSONObject();
+        response.put("message", "a message");
+        response.put("currentFolder", folder.getFile().getName());
+        response.put("path", folder.getPathFromRoot());
+        response.put("folders", folder.getJSONTopLevelFolders());
+        response.put("files", folder.getJSONFiles());
+        return response;
     }
 
     static class MyHandler implements HttpHandler {
@@ -74,6 +85,7 @@ public class Controller {
 
          @Override
         public void handle(HttpExchange t) throws IOException {
+
             JSONObject response = new JSONObject();
             response.put("message", "a message");
             response.put("currentFolder", folder.getFile().getName());

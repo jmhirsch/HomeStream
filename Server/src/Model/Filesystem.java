@@ -29,6 +29,10 @@ public abstract class Filesystem implements Comparable<Filesystem>{
         return type;
     }
 
+    public String getName(){
+        return this.file.getName();
+    }
+
     public int compareTo(Filesystem f2){
         return this.getFile().getName().compareToIgnoreCase(f2.getFile().getName());
     }

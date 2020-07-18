@@ -20,12 +20,9 @@ public class ServerService {
     public void startServer(Function <HttpServer, Void> contextCreator){
         try {
             server = HttpServer.create(address, 0);
-
-
             server.setExecutor(null);
             server.start();
             contextCreator.apply(server);
-            System.out.println("Server started");
         } catch (IOException e) {
             e.printStackTrace();
         } {
