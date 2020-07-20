@@ -1,4 +1,4 @@
-package ServerService;
+package Services;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -35,5 +35,9 @@ public class ServerService {
         } finally {
             System.out.println("Server Closed");
         }
+    }
+
+    protected HttpServer getServer(){
+        return this.server;
     }
 }
