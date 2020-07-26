@@ -41,6 +41,28 @@ public class Controller {
         }
     }
 
+    private Void refresh(HttpServer server){
+        removeContexts(root, server);
+        System.out.println("removed contexts");
+        processFileChooserInput(root.getFile().getPath());
+        createContexts(server);
+        System.out.println("Readded contexts");
+        return null;
+    }
+
+    private void removeContexts(Folder folder, HttpServer server){
+
+        server.removeContext(folder.getPathFromRoot());
+
+        for (CFile file: folder.getFiles()){
+            server.removeContext(file.getPathFromRoot());
+        }
+
+        for (Folder subFolder: folder.getFolders()){
+            removeContexts(subFolder, server);
+        }
+    }
+
 
     public void stopServerService(Function<Boolean, Void> callback){
         serverService.exit();
@@ -49,11 +71,8 @@ public class Controller {
     }
 
     private Void createContexts(HttpServer server){
-        server.createContext(root.getPathFromRoot(), new MyHandler(root));
-
-        for (Folder folder: root.getFolders()){
-            createContexts(server, folder);
-        }
+        createContexts(server, root);
+        server.createContext("/Refresh/", new RefreshHandler(server, this::refresh));
         return null;
     }
 
@@ -100,8 +119,6 @@ public class Controller {
     }
 
     static class MyHandler implements HttpHandler {
-
-
         private final Folder folder;
 
         public MyHandler(Folder folder){
@@ -130,6 +147,39 @@ public class Controller {
                 }
             };
            worker.execute();
+        }
+    }
+
+    static class RefreshHandler implements HttpHandler {
+        private HttpServer server;
+
+        private Function<HttpServer, Void> refreshCallback;
+
+
+        public RefreshHandler(HttpServer server, Function<HttpServer, Void> refreshCallback){
+            this.server = server;
+            this.refreshCallback = refreshCallback;
+        }
+
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    JSONObject response = new JSONObject();
+                    response.put("message", "Refreshed!");
+                    System.out.println(response.toString());
+
+                    refreshCallback.apply(server);
+
+                    t.sendResponseHeaders(200, response.toString().getBytes().length);
+                    OutputStream os = t.getResponseBody();
+                    os.write(response.toString().getBytes());
+                    os.close();
+                    return null;
+                }
+            };
+            worker.execute();
         }
     }
 }

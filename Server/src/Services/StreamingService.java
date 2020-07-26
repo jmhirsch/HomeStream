@@ -26,7 +26,7 @@ public class StreamingService extends ServerService {
     @Override
     public void startServer(Function<HttpServer, Void> contextCreator){
         super.startServer(contextCreator);
-        getServer().createContext("/play", new StreamHandler());
+        getServer().createContext("/play", new StreamHandler(fileToPlay));
     }
 
     static class StreamHandler implements HttpHandler {
@@ -37,7 +37,6 @@ public class StreamingService extends ServerService {
         public StreamHandler(CFile fileToPlay){
             this.fileToPlay = fileToPlay;
             this.file = fileToPlay.getFile();
-
         }
 
         @Override
