@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/HomeStream.iml" filepath="$PROJECT_DIR$/.idea/HomeStream.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Server/Server.iml" filepath="$PROJECT_DIR$/Server/Server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Server/HomeStream-Server.iml" filepath="$PROJECT_DIR$/Server/HomeStream-Server.iml" />
     </modules>
   </component>
 </project>

@@ -8,9 +8,20 @@ public abstract class Filesystem implements Comparable<Filesystem>{
     private final File file;
     private final FileType type;
 
+    private final Filesystem root;
+    protected String pathFromRoot;
+
+
     public Filesystem(File file, FileType type){
-       this.file = file;
+        this.file = file;
         this.type = type;
+        this.root = this;
+    }
+
+    public Filesystem(File file, FileType type, Filesystem root){
+        this.file = file;
+        this.type = type;
+        this.root = root;
     }
 
     public void printName(){
@@ -18,7 +29,7 @@ public abstract class Filesystem implements Comparable<Filesystem>{
     }
 
     public void printPath(){
-        printPath();
+        System.out.println(file.getPath());
     }
 
     public File getFile() {
@@ -31,6 +42,14 @@ public abstract class Filesystem implements Comparable<Filesystem>{
 
     public String getName(){
         return this.file.getName();
+    }
+
+    public String getPathFromRoot(){
+        return pathFromRoot;
+    }
+
+    public Filesystem getRoot(){
+        return root;
     }
 
     public int compareTo(Filesystem f2){

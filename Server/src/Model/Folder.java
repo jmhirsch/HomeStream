@@ -6,46 +6,67 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class Folder extends Filesystem {
 
     private static final String[] extensionlist = {".mp4", ".m4a", ".m4v", ".f4v", ".fa4", ".m4b", ".m4r", ".f4b", ".mov", ".3gp",
             ".3gp2", ".3g2", ".3gpp", ".3gpp2", ".ogg", ".oga", ".ogv", ".ogx", ".wmv", ".wma",
-            ".webm", ".flv", ".avi", ".mpg", ".mkv"};
+            ".webm", ".flv", ".avi", ".mpg", ".mkv", ".ts"};
 
-    private ArrayList<Folder> folders = new ArrayList<>();
-    private ArrayList<CFile> files = new ArrayList<>();
+    private List<Folder> folders = new ArrayList<>();
+    private List<CFile> files = new ArrayList<>();
 
-    private String pathFromRoot;
-
-    public Folder(File file, String pathFromRoot, boolean isRoot) {
+    public Folder(File file) {
         super(file, FileType.FOLDER);
-        if (isRoot){
+        this.pathFromRoot = "";
+
+        setup(file);
             this.pathFromRoot = "/";
-        }else {
-            this.pathFromRoot = pathFromRoot + getName()+ "/";
-        }
-        System.out.println(pathFromRoot);
+    }
 
-        File [] subfolders = file.listFiles(File::isDirectory);
+    private Folder(File file, String pathFromRoot, Filesystem root){
+        super(file, FileType.FOLDER, root);
+
+        this.pathFromRoot =  pathFromRoot + "/" + getName();
+        setup(file);
+
+    }
+
+    private void setup(File file) {
+        addSubfolders(file);
+        addFiles(file);
+        sort();
+    }
+
+
+
+    private void sort() {
+        Collections.sort(folders);
+        Collections.sort(files);
+    }
+
+    private void addFiles(File file) {
         File [] files = file.listFiles(File::isFile);
-
-        if (subfolders != null) {
-            for (File subfolder: subfolders){
-                folders.add(new Folder(subfolder, this.pathFromRoot, false));
-            }
-        }
-
         if (files != null) {
             for (File subfile: files){
                 if (!subfile.getName().startsWith(".") && isMovieOrSubtitle(subfile.getName())) {
-                    this.files.add(new CFile(subfile));
+                    this.files.add(new CFile(subfile, this.pathFromRoot, this.getRoot()));
                 }
             }
         }
+    }
 
-        Collections.sort(folders);
-        Collections.sort(this.files);
+    private void addSubfolders(File file) {
+        File [] subfolders = file.listFiles(File::isDirectory);
+        if (subfolders != null) {
+            for (File subfolder: subfolders){
+                if (subfolder.getName().contains("Stream")){
+                    continue;
+                }
+                folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot()));
+            }
+        }
     }
 
     public void listAllFolders(){
@@ -87,18 +108,18 @@ public class Folder extends Filesystem {
         return items;
     }
 
-    public ArrayList<Folder> getFolders() {
+    public List<Folder> getFolders() {
         return folders;
+    }
+
+    public List<CFile> getFiles(){
+        return files;
     }
 
     public void listAllFiles(){
         for (CFile file: files){
             file.printName();
         }
-    }
-
-    public String getPathFromRoot(){
-        return pathFromRoot;
     }
 
     private boolean isMovieOrSubtitle(String str){
