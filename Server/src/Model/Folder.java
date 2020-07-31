@@ -12,7 +12,7 @@ public class Folder extends Filesystem {
 
     private static final String[] extensionlist = {".mp4", ".m4a", ".m4v", ".f4v", ".fa4", ".m4b", ".m4r", ".f4b", ".mov", ".3gp",
             ".3gp2", ".3g2", ".3gpp", ".3gpp2", ".ogg", ".oga", ".ogv", ".ogx", ".wmv", ".wma",
-            ".webm", ".flv", ".avi", ".mpg", ".mkv"};
+            ".webm", ".flv", ".avi", ".mpg", ".mkv", ".ts"};
 
     private List<Folder> folders = new ArrayList<>();
     private List<CFile> files = new ArrayList<>();
@@ -25,8 +25,8 @@ public class Folder extends Filesystem {
             this.pathFromRoot = "/";
     }
 
-    private Folder(File file, String pathFromRoot){
-        super(file, FileType.FOLDER);
+    private Folder(File file, String pathFromRoot, Filesystem root){
+        super(file, FileType.FOLDER, root);
 
         this.pathFromRoot =  pathFromRoot + "/" + getName();
         setup(file);
@@ -51,7 +51,7 @@ public class Folder extends Filesystem {
         if (files != null) {
             for (File subfile: files){
                 if (!subfile.getName().startsWith(".") && isMovieOrSubtitle(subfile.getName())) {
-                    this.files.add(new CFile(subfile, this.pathFromRoot));
+                    this.files.add(new CFile(subfile, this.pathFromRoot, this.getRoot()));
                 }
             }
         }
@@ -61,7 +61,10 @@ public class Folder extends Filesystem {
         File [] subfolders = file.listFiles(File::isDirectory);
         if (subfolders != null) {
             for (File subfolder: subfolders){
-                folders.add(new Folder(subfolder, this.pathFromRoot));
+                if (subfolder.getName().contains("Stream")){
+                    continue;
+                }
+                folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot()));
             }
         }
     }

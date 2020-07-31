@@ -4,15 +4,17 @@ import Model.CFile;
 import Model.Folder;
 import Services.ServerService;
 import Services.StreamingService;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
 import org.json.JSONObject;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.function.Function;
 
 public class Controller {
@@ -21,6 +23,7 @@ public class Controller {
     private int portNum;
     private ServerService serverService;
     private Folder root;
+    private double secureKey;
 
     public Controller(){
         currentPath = "";
@@ -30,139 +33,151 @@ public class Controller {
     public void processFileChooserInput(String path){
         currentPath = path;
         root = new Folder(new File(path));
+        System.out.println("root path: " + root.getFile().getPath());
     }
 
     public void startServerService(int portNum, Function<Boolean, Void> callback){
         if (!currentPath.equals("")){ // ensure a folder is actually selected
             this.portNum = portNum;
-            serverService = new ServerService(portNum);
-            serverService.startServer(this::createContexts);
+            serverService = ServerService.getInstance();
+            secureKey = serverService.startServer(this::createContexts, portNum);
             callback.apply(true);
         }
     }
 
-    private Void refresh(HttpServer server){
-        removeContexts(root, server);
-        System.out.println("removed contexts");
+    private Void refresh(Void none){
+        removeContexts(root);
+       // System.out.println("removed contexts");
         processFileChooserInput(root.getFile().getPath());
-        createContexts(server);
-        System.out.println("Readded contexts");
+        createContexts(secureKey);
+        //System.out.println("Readded contexts");
         return null;
     }
 
-    private void removeContexts(Folder folder, HttpServer server){
-
-        server.removeContext(folder.getPathFromRoot());
-
+    private void removeContexts(Folder folder){
+        ServerService.getInstance().removeContext(secureKey, folder.getPathFromRoot());
         for (CFile file: folder.getFiles()){
-            server.removeContext(file.getPathFromRoot());
+            ServerService.getInstance().removeContext(secureKey, file.getPathFromRoot());
         }
 
         for (Folder subFolder: folder.getFolders()){
-            removeContexts(subFolder, server);
+            removeContexts(subFolder);
         }
     }
 
 
     public void stopServerService(Function<Boolean, Void> callback){
-        serverService.exit();
+        serverService.exit(secureKey);
         serverService = null;
         callback.apply(false);
     }
 
-    private Void createContexts(HttpServer server){
-        createContexts(server, root);
-        server.createContext("/Refresh/", new RefreshHandler(server, this::refresh));
+    private Void createContexts(Double secureKey){
+        this.secureKey = secureKey;
+        createContexts(root);
+        ServerService.getInstance().addContext(secureKey,"/Refresh/", new RefreshHandler(this::refresh));
         return null;
     }
 
-    private void createContexts(HttpServer server, Folder folder){
-        server.createContext(folder.getPathFromRoot(), new MyHandler(folder));
+    private void createContexts(Folder folder){
+        if (folder.getName().contains("Caches")){
+            System.out.println("ignoring stream folder");
+        return;
+        }
+
+        ServerService.getInstance().addContext(secureKey, folder.getPathFromRoot(), new FolderHandler(folder));
         
         for (CFile file: folder.getFiles()){
-            server.createContext(file.getPathFromRoot(), new FileHandler(file, portNum));
+            ServerService.getInstance().addContext(secureKey, file.getPathFromRoot(), new FileHandler(file, secureKey));
         }
 
         for (Folder subFolder: folder.getFolders()){
-           createContexts(server, subFolder);
+           createContexts(subFolder);
         }
     }
 
     static class FileHandler implements HttpHandler{
 
         private final CFile file;
-        private final int portNum;
-        public FileHandler(CFile file, int portNum){
+        private final double secureKey;
+        public FileHandler(CFile file, double secureKey){
             this.file = file;
-            this.portNum = portNum;
+            this.secureKey = secureKey;
         }
 
         @Override
         public void handle(HttpExchange t) throws IOException {
-            SwingWorker<Void, Void> worker = new SwingWorker<>() {
-                @Override
-                protected Void doInBackground() throws Exception {
-                    JSONObject response = new JSONObject();
-                    response.put("file", file.getName());
-                    t.sendResponseHeaders(200, response.toString().getBytes().length);
-
-                    StreamingService streamingService = new StreamingService(portNum + 1, file);
-
-                    OutputStream os = t.getResponseBody();
-                    os.write(response.toString().getBytes());
-                    os.close();
-                    return null;
-                }
-            };
-            worker.execute();
+            JSONObject response = new JSONObject();
+            response.put("file", file.getName());
+            t.sendResponseHeaders(200, response.toString().getBytes().length);
+            new StreamingService(secureKey, file);
+            OutputStream os = t.getResponseBody();
+            os.write(response.toString().getBytes());
+            os.close();
         }
     }
 
-    static class MyHandler implements HttpHandler {
+    static class FolderHandler implements HttpHandler {
         private final Folder folder;
 
-        public MyHandler(Folder folder){
+        public FolderHandler(Folder folder){
             this.folder = folder;
         }
 
          @Override
         public void handle(HttpExchange t) throws IOException {
-            SwingWorker<Void, Void> worker = new SwingWorker<>() {
-                @Override
-                protected Void doInBackground() throws Exception {
-                    JSONObject response = new JSONObject();
-                    response.put("message", "a message");
-                    response.put("currentFolder", folder.getFile().getName());
-                    response.put("path", folder.getPathFromRoot());
-                    response.put("folders", folder.getJSONTopLevelFolders());
-                    response.put("files", folder.getJSONFiles());
-                    System.out.println(response.toString());
+             Headers h = t.getRequestHeaders();
+             System.out.println(h.entrySet());
+             InputStream r = t.getRequestBody();
+
+             URI a = t.getRequestURI();
 
 
-                    t.sendResponseHeaders(200, response.toString().getBytes().length);
-                    OutputStream os = t.getResponseBody();
-                    os.write(response.toString().getBytes());
-                    os.close();
-                    return null;
-                }
-            };
-           worker.execute();
-        }
+             JSONObject response = new JSONObject();
+             int responseCode = 0;
+
+             System.out.println(a.getPath());
+             if (a.getPath().equals(folder.getPathFromRoot()) || a.getPath().equals(folder.getPathFromRoot() + "/")){
+                 System.out.println("Valid Request");
+
+
+                 response.put("message", "a message");
+                 response.put("currentFolder", folder.getFile().getName());
+                 response.put("path", folder.getPathFromRoot());
+                 response.put("folders", folder.getJSONTopLevelFolders());
+                 response.put("files", folder.getJSONFiles());
+                 responseCode = 200;
+             }
+             else{
+                 System.out.println("Invalid Request");
+                 response.put("message", "Invalid Query");
+                 responseCode = 404;
+             }
+
+
+
+
+             System.out.println(response.toString());
+
+
+             t.sendResponseHeaders(responseCode, response.toString().getBytes().length);
+             OutputStream os = t.getResponseBody();
+             os.write(response.toString().getBytes());
+             os.close();
+         }
+
     }
 
     static class RefreshHandler implements HttpHandler {
-        private HttpServer server;
 
-        private Function<HttpServer, Void> refreshCallback;
+        private Function<Void, Void> refreshCallback;
 
-
-        public RefreshHandler(HttpServer server, Function<HttpServer, Void> refreshCallback){
-            this.server = server;
+        public RefreshHandler(Function<Void, Void> refreshCallback){
             this.refreshCallback = refreshCallback;
         }
 
         @Override
-        public void handle(HttpExchange t) throws IOException {
+        public void handle(HttpExchange t) {
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
@@ -170,7 +185,7 @@ public class Controller {
                     response.put("message", "Refreshed!");
                     System.out.println(response.toString());
 
-                    refreshCallback.apply(server);
+                    refreshCallback.apply(null);
 
                     t.sendResponseHeaders(200, response.toString().getBytes().length);
                     OutputStream os = t.getResponseBody();
