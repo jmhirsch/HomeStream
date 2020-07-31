@@ -19,6 +19,9 @@ import java.util.function.Function;
 
 public class Controller {
 
+    public static final String CACHE_FOLDER_IGNORE_STR = ".Caches";
+    public static final String PATH_TO_CACHE_FOLDER = "/" + CACHE_FOLDER_IGNORE_STR;
+
     private String currentPath;
     private int portNum;
     private ServerService serverService;
@@ -80,9 +83,9 @@ public class Controller {
     }
 
     private void createContexts(Folder folder){
-        if (folder.getName().contains("Caches")){
-            System.out.println("ignoring stream folder");
-        return;
+        if (folder.getName().equals(CACHE_FOLDER_IGNORE_STR)){
+            System.out.println("ignoring cache folder");
+            return;
         }
 
         ServerService.getInstance().addContext(secureKey, folder.getPathFromRoot(), new FolderHandler(folder));
@@ -132,15 +135,12 @@ public class Controller {
 
              URI a = t.getRequestURI();
 
-
              JSONObject response = new JSONObject();
              int responseCode = 0;
 
              System.out.println(a.getPath());
              if (a.getPath().equals(folder.getPathFromRoot()) || a.getPath().equals(folder.getPathFromRoot() + "/")){
                  System.out.println("Valid Request");
-
-
                  response.put("message", "a message");
                  response.put("currentFolder", folder.getFile().getName());
                  response.put("path", folder.getPathFromRoot());
@@ -153,13 +153,7 @@ public class Controller {
                  response.put("message", "Invalid Query");
                  responseCode = 404;
              }
-
-
-
-
              System.out.println(response.toString());
-
-
              t.sendResponseHeaders(responseCode, response.toString().getBytes().length);
              OutputStream os = t.getResponseBody();
              os.write(response.toString().getBytes());
@@ -178,7 +172,7 @@ public class Controller {
 
         @Override
         public void handle(HttpExchange t) {
-            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     JSONObject response = new JSONObject();

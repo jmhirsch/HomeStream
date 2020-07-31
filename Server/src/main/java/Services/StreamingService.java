@@ -1,5 +1,6 @@
 package Services;
 
+import Controller.Controller;
 import Model.CFile;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -22,10 +23,11 @@ public class StreamingService implements AutoCloseable {
     public StreamingService(double secureKey, CFile fileToPlay) {
         this.secureKey = secureKey;
         this.fileToPlay = fileToPlay;
-        pathToTSCache = "/.Caches/" + fileToPlay.getName() + "/";
-        System.out.println("File to play extention: " + fileToPlay.getExtension());
+        pathToTSCache = Controller.PATH_TO_CACHE_FOLDER + "/" + fileToPlay.getName() + "/";
         pathToServerDirectory = fileToPlay.getRoot().getFile().getPath();
         pathToPlaylist = pathToServerDirectory + pathToTSCache + fileToPlay.getNameStripExtension() + ".m3u8";
+
+        M3U8EncoderService encoderService = new M3U8EncoderService(pathToTSCache, fileToPlay, pathToPlaylist);
 
         paths = new ArrayList<>();
 
@@ -132,7 +134,7 @@ public class StreamingService implements AutoCloseable {
 
     static class StreamHandler implements HttpHandler {
 
-        private String pathToPlaylist;
+        private final String pathToPlaylist;
 
         public StreamHandler(String pathToPlaylist) {
             this.pathToPlaylist = pathToPlaylist;
