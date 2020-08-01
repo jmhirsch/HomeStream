@@ -13,16 +13,30 @@ public class UI extends JFrame {
     private final JButton stopButton;
     private final JButton rootFolderChooserButton;
     private final JTextField portNumField;
-
-
-
     private final Controller controller;
+
     public UI(Controller controller){
+
+
+        Desktop desktop = Desktop.getDesktop();
+
+        desktop.setPreferencesHandler(e ->
+                JOptionPane.showMessageDialog(null, "Handle Preferences"));
+
+
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(new JMenu("hello"));
+        setJMenuBar(menuBar);
+
         this.controller = controller;
 
         Container contentPane = getContentPane();
 
         portNumField = new JTextField("3004");
+
+
+
+
 
 
         startButton = new JButton("Start Service");
