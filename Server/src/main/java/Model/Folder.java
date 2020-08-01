@@ -1,5 +1,6 @@
 package Model;
 
+import Controller.Controller;
 import Enums.FileType;
 import org.json.JSONObject;
 
@@ -61,7 +62,7 @@ public class Folder extends Filesystem {
         File [] subfolders = file.listFiles(File::isDirectory);
         if (subfolders != null) {
             for (File subfolder: subfolders){
-                if (subfolder.getName().contains("Stream")){
+                if (subfolder.getName().equals(Controller.CACHE_FOLDER_IGNORE_STR)){
                     continue;
                 }
                 folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot()));
