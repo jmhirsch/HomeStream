@@ -1,8 +1,6 @@
 package View;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.Function;
 
@@ -47,11 +45,11 @@ public class CustomToolbar extends JToolBar {
         button.setVerticalTextPosition(AbstractButton.BOTTOM);
         button.setHorizontalTextPosition(AbstractButton.CENTER);
         button.setFocusPainted(false);
-        try {
-            System.out.println(new File(".").getCanonicalPath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            System.out.println(new File(".").getCanonicalPath());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         button.addActionListener(e -> {
             ToolbarButton buttonSource = (ToolbarButton) e.getSource();
@@ -61,7 +59,7 @@ public class CustomToolbar extends JToolBar {
         return button;
     }
 
-    private <T> void setSelectedButton(ToolbarButton button){
+    private void setSelectedButton(ToolbarButton button){
         for (ToolbarButton otherButton : buttonList){
             if (otherButton == button){
                 continue;

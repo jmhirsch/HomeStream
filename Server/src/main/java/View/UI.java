@@ -2,6 +2,8 @@ package View;
 
 import Controller.Controller;
 import Exceptions.CouldNotFindIPException;
+import Model.Property;
+import Services.PropertyService;
 import Services.ServerService;
 import net.miginfocom.swing.MigLayout;
 
@@ -49,15 +51,15 @@ public class UI extends JFrame {
     private final JLabel remoteIPLabel;
     private final JLabel remotePortLabel;
     private final JLabel couldNotFindIPLabel;
-    private JCheckBox remotePortBox;
+    private JCheckBox customRemotePortCheckBox;
 
     private JPanel loginPanel;
     private JTextField usernameField;
     private JPasswordField passwordField;
-    private JCheckBox useLoginBox;
+    private JCheckBox requireAuthenticationCheckBox;
     private JLabel usernameLabel;
     private JLabel passwordLabel;
-
+    private JCheckBox remoteAccessCheckBox;
 
 
     public UI(Controller controller){
@@ -167,10 +169,43 @@ public class UI extends JFrame {
 
         focusLabel.grabFocus();
 
+        loadFromFile();
+
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    private void loadFromFile() {
+        PropertyService properties = PropertyService.getInstance();
+
+        String localPortNum = properties.getProperty(Property.LOCAL_PORT);
+        String remotePortNum = properties.getProperty(Property.REMOTE_PORT);
+
+        localPortTextField.setText(localPortNum);
+        remotePortTextField.setText(remotePortNum);
+
+        boolean startOnLogin = properties.getPropertyAsBool(Property.START_ON_LOGIN);
+        boolean useRemotePort = properties.getPropertyAsBool(Property.USE_DIFFERENT_REMOTE_PORT);
+        boolean autoLaunchServer = properties.getPropertyAsBool(Property.AUTO_LAUNCH_SERVER);
+        boolean requireAuthentication = properties.getPropertyAsBool(Property.REQUIRE_AUTHENTICATION);
+        boolean remoteAccess = properties.getPropertyAsBool(Property.REMOTE_ACCESS_ENABLED);
+
+        customRemotePortCheckBox.setSelected(useRemotePort);
+        remoteAccessCheckBox.setSelected(remoteAccess);
+        requireAuthenticationCheckBox.setSelected(requireAuthentication);
+
+        customRemotePortBoxToggled();
+        requireAuthenticationToggled();
+        remoteAccessBoxToggled();
+
+
+        String username = properties.getProperty(Property.USERNAME);
+        String password = properties.getProperty(Property.PASSWORD);
+
+        usernameField.setText(username);
+        passwordField.setText(password);
 
     }
 
@@ -209,27 +244,14 @@ public class UI extends JFrame {
         loginPanel = new JPanel();
         loginPanel.setLayout(new MigLayout("", "nogrid", "nogrid"));
 
-        useLoginBox = new JCheckBox("Require authentication");
-        useLoginBox.addActionListener(e -> {
-            boolean selected = useLoginBox.isSelected();
-            usernameField.setEnabled(selected);
-            passwordField.setEnabled(selected);
-
-            if (selected){
-                usernameLabel.setForeground(LABEL_ENABLED_COLOR);
-                passwordLabel.setForeground(LABEL_ENABLED_COLOR);
-            }else{
-                usernameLabel.setForeground(LABEL_DISABLED_COLOR);
-                passwordLabel.setForeground(LABEL_DISABLED_COLOR);
-            }
-
-        });
+        requireAuthenticationCheckBox = new JCheckBox("Require authentication");
+        requireAuthenticationCheckBox.addActionListener(e -> requireAuthenticationToggled());
         usernameField = new JTextField();
         passwordField = new JPasswordField();
         usernameLabel = new JLabel("Username:");
         passwordLabel = new JLabel("Password:");
 
-        loginPanel.add(useLoginBox, "wrap");
+        loginPanel.add(requireAuthenticationCheckBox, "wrap");
         loginPanel.add(usernameLabel,"gap left 20, ax right");
         loginPanel.add(usernameField, "w 120!, wrap");
         loginPanel.add(passwordLabel, "gap left 20, ax right");
@@ -238,11 +260,26 @@ public class UI extends JFrame {
         setDefaultPanelSettings(loginPanel, container);
     }
 
+    private void requireAuthenticationToggled() {
+        boolean selected = requireAuthenticationCheckBox.isSelected();
+        usernameField.setEnabled(selected);
+        passwordField.setEnabled(selected);
+
+        if (selected){
+            usernameLabel.setForeground(LABEL_ENABLED_COLOR);
+            passwordLabel.setForeground(LABEL_ENABLED_COLOR);
+        }else{
+            usernameLabel.setForeground(LABEL_DISABLED_COLOR);
+            passwordLabel.setForeground(LABEL_DISABLED_COLOR);
+        }
+        PropertyService.getInstance().setProperty(Property.REQUIRE_AUTHENTICATION, selected);
+    }
+
     private void createNetworkPanel(JPanel container){
-        JCheckBox remoteAccessBox = new JCheckBox("Enable Remote Access");
-        remotePortBox = new JCheckBox("Use different Remote Port");
-        remoteAccessBox.addActionListener(e -> remoteAccessSelectionChanged(remoteAccessBox.isSelected()));
-        remotePortBox.addActionListener(e -> customRemotePortSelectionChanged());
+        remoteAccessCheckBox = new JCheckBox("Enable Remote Access");
+        customRemotePortCheckBox = new JCheckBox("Use different Remote Port");
+        remoteAccessCheckBox.addActionListener(e -> remoteAccessBoxToggled());
+        customRemotePortCheckBox.addActionListener(e -> customRemotePortBoxToggled());
         JButton refreshIPButton = new JButton("refresh");
         refreshIPButton.addActionListener(e -> refreshIP());
 
@@ -254,16 +291,15 @@ public class UI extends JFrame {
         networkPanel.add(refreshIPButton, MIG_WRAP);
         networkPanel.add(new JLabel("Port:"));
         networkPanel.add(localPortTextField, MIG_WRAP);
-        networkPanel.add(remoteAccessBox, "skip, wrap");
+        networkPanel.add(remoteAccessCheckBox, "skip, wrap");
         networkPanel.add(remoteIPLabel, "skip, gap left 20, ax right, split");
         networkPanel.add(remoteIPTextField, "ax right, wrap");
-        networkPanel.add(remotePortBox, "skip, gap left 25, wrap");
+        networkPanel.add(customRemotePortCheckBox, "skip, gap left 25, wrap");
         networkPanel.add(remotePortLabel, "skip, gap left 40, split");
         networkPanel.add(remotePortTextField, "ax right, wrap");
         networkPanel.add(couldNotFindIPLabel, "span 3, ax center" );
 
         refreshIP();
-        remoteAccessSelectionChanged(false);
         setDefaultPanelSettings(networkPanel, container);
     }
 
@@ -277,8 +313,8 @@ public class UI extends JFrame {
         }
     }
 
-    private void customRemotePortSelectionChanged() {
-        boolean selected = remotePortBox.isSelected();
+    private void customRemotePortBoxToggled() {
+        boolean selected = customRemotePortCheckBox.isSelected();
         remotePortTextField.setEnabled(selected);
 
         if (selected){
@@ -286,17 +322,20 @@ public class UI extends JFrame {
         }else{
             remotePortLabel.setForeground(LABEL_DISABLED_COLOR);
         }
+
+        PropertyService.getInstance().setProperty(Property.USE_DIFFERENT_REMOTE_PORT, selected);
     }
 
-    private void remoteAccessSelectionChanged(boolean selected) {
+    private void remoteAccessBoxToggled() {
+        boolean selected = remoteAccessCheckBox.isSelected();
         remoteIPTextField.setEnabled(selected);
 
-        remotePortBox.setEnabled(selected);
+        customRemotePortCheckBox.setEnabled(selected);
 
         if (selected){
             remoteIPLabel.setForeground(LABEL_ENABLED_COLOR);
 
-            if (remotePortBox.isSelected()) {
+            if (customRemotePortCheckBox.isSelected()) {
                 remotePortTextField.setEnabled(selected);
                 remotePortLabel.setForeground(LABEL_ENABLED_COLOR);
             }
@@ -305,6 +344,8 @@ public class UI extends JFrame {
             remotePortLabel.setForeground(LABEL_DISABLED_COLOR);
             remotePortTextField.setEnabled(selected);
         }
+
+        PropertyService.getInstance().setProperty(Property.REMOTE_ACCESS_ENABLED, selected);
     }
 
     private void createVideoPanel(JPanel container){

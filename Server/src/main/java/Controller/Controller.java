@@ -22,6 +22,12 @@ public class Controller {
     public static final String CACHE_FOLDER_IGNORE_STR = ".Caches";
     public static final String PATH_TO_CACHE_FOLDER = "/" + CACHE_FOLDER_IGNORE_STR;
 
+
+    public static final int DEFAULT_PORT = 3004;
+    public static final String DEFAULT_USERNAME = "admin";
+    public static final String DEFAULT_PW = "admin";
+
+
     private String currentPath;
     private int portNum;
     private ServerService serverService;

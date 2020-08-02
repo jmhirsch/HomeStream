@@ -1,10 +1,9 @@
 package View;
 
 import Controller.Controller;
+import Services.PropertyService;
 
 import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
-import java.awt.*;
 
 public class Main {
 
@@ -15,6 +14,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        PropertyService.getInstance();
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             if (isMacOS) {
@@ -23,7 +23,7 @@ public class Main {
                 System.setProperty("apple.awt.textantialiasing", "true");
                 System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
                 UIManager.setLookAndFeel("org.violetlib.aqua.AquaLookAndFeel");
-                setUIFont(new FontUIResource("Lucida Grande", Font.PLAIN, 13));
+                //setUIFont(new FontUIResource("Lucida Grande", Font.PLAIN, 13));
             }
 
         } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
@@ -39,8 +39,6 @@ public class Main {
             }
             ui.setVisible(true);
         });
-
-
     }
 
 
