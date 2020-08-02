@@ -8,8 +8,12 @@ import java.util.function.Function;
 
 public class CustomToolbar extends JToolBar {
 
+    public static final String PATH_TO_IMAGES = "Server/src/icons/";
+    public static final String PATH_TO_ORIGINAL_IMAGES = PATH_TO_IMAGES + "/icons_original/";
+    private static final String PNG_EXT = ".png";
+
     private ArrayList<ToolbarButton> buttonList;
-    private final Function<Object, Object> revalidate;
+    private final Function<String, ?> revalidate;
 
 
 
@@ -17,7 +21,7 @@ public class CustomToolbar extends JToolBar {
         this(buttonBuilderList, null);
     }
 
-    public CustomToolbar(ArrayList<ToolbarButtonBuilder> buttonBuilderList, Function<Object, Object> revalidate){
+    public CustomToolbar(ArrayList<ToolbarButtonBuilder> buttonBuilderList, Function<String, ?> revalidate){
         super();
 
 
@@ -29,7 +33,6 @@ public class CustomToolbar extends JToolBar {
             add(button);
             buttonList.add(button);
         }
-
         buttonBuilderList.clear();
         setSelectedButton(buttonList.get(0));
     }
@@ -37,7 +40,7 @@ public class CustomToolbar extends JToolBar {
 
     private ToolbarButton createButtonForToolBar(String title, String imageName, JComponent componentToDisplay){
 
-        ImageIcon icon = new ImageIcon("Server/src/icons/icons_original/" + imageName + ".png");
+        ImageIcon icon = new ImageIcon(PATH_TO_ORIGINAL_IMAGES + imageName + PNG_EXT);
 
         ToolbarButton button = new ToolbarButton(icon, componentToDisplay);
         button.setText(title);
@@ -58,7 +61,7 @@ public class CustomToolbar extends JToolBar {
         return button;
     }
 
-    private void setSelectedButton(ToolbarButton button){
+    private <T> void setSelectedButton(ToolbarButton button){
         for (ToolbarButton otherButton : buttonList){
             if (otherButton == button){
                 continue;
@@ -68,8 +71,9 @@ public class CustomToolbar extends JToolBar {
         }
         button.setSelected(true);
         button.showComponent();
+
         if (revalidate != null) {
-            revalidate.apply(null);
+            revalidate.apply(button.getText());
         }
     }
 }

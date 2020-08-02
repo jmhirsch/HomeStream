@@ -3,65 +3,41 @@ package View;
 import Controller.Controller;
 
 import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
+import java.awt.*;
 
 public class Main {
 
-    private static boolean isMacOS;
+    private static final boolean isMacOS = System.getProperty("os.name").toLowerCase().contains("mac");
 
     public static boolean systemIsMacOS(){
         return isMacOS;
     }
 
     public static void main(String[] args) {
-
-
-        String osName = System.getProperty("os.name").toLowerCase();
-        boolean isMacOS = osName.contains("mac");
-
-        Main.isMacOS = isMacOS;
-
-        if (isMacOS) {
-            System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.application.name", "HomeStream");
-            System.setProperty("apple.awt.textantialiasing", "true");
-            System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
-
-            //setUIFont(new javax.swing.plaf.FontUIResource("Lucida Grande", Font.PLAIN, 12));
-        }
         try {
-//                UIManager.setLookAndFeel(new FlatIntelliJLaf());
-//
-//                UIManager.put( "Button.arc", 8);
-//                UIManager.put( "Component.arc", 8);
-//                UIManager.put( "CheckBox.arc", 8);
-//                UIManager.put( "ProgressBar.arc", 8);
-//                UIManager.put( "TextComponent.arc", 8);
-//                UIManager.put("TabbedPane.hasFullBorder", true);
-//                UIManager.put("tabsOverlapBorder", true);
-//                UIManager.put("tabsRunOverlay", 10);
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            UIManager.setLookAndFeel("org.violetlib.aqua.AquaLookAndFeel");
-        } catch (UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+            if (isMacOS) {
+                System.setProperty("apple.laf.useScreenMenuBar", "true");
+                System.setProperty("apple.awt.application.name", "HomeStream");
+                System.setProperty("apple.awt.textantialiasing", "true");
+                System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
+                UIManager.setLookAndFeel("org.violetlib.aqua.AquaLookAndFeel");
+                setUIFont(new FontUIResource("Lucida Grande", Font.PLAIN, 13));
+            }
+
+        } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
 
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                Controller controller = new Controller();
-                UI ui = new UI(controller);
-                if (isMacOS){
-                    ui.getRootPane().putClientProperty("Aqua.windowStyle", "unifiedToolBar");
-                }
-                ui.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            Controller controller = new Controller();
+            UI ui = new UI(controller);
+            if (isMacOS){
+                ui.getRootPane().putClientProperty("Aqua.windowStyle", "unifiedToolBar");
             }
+            ui.setVisible(true);
         });
 
 

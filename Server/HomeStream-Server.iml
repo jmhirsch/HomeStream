@@ -27,6 +27,7 @@
     </orderEntry>
     <orderEntry type="library" name="org.json:json:20200518" level="project" />
     <orderEntry type="library" name="MigLayout" level="project" />
+    <orderEntry type="library" name="VAqua7" level="project" />
     <orderEntry type="library" name="Maven: com.github.kokorin.jaffree:jaffree:0.9.6" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.7" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20200518" level="project" />
@@ -60,7 +61,7 @@
     <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:macosx-x86_64:4.2.2-1.5.3" level="project" />
     <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:windows-x86:4.2.2-1.5.3" level="project" />
     <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:windows-x86_64:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: com.formdev:flatlaf:0.38" level="project" />
-    <orderEntry type="library" name="VAqua7" level="project" />
+    <orderEntry type="library" name="Maven: com.miglayout:miglayout-swing:5.2" level="project" />
+    <orderEntry type="library" name="Maven: com.miglayout:miglayout-core:5.2" level="project" />
   </component>
 </module>
