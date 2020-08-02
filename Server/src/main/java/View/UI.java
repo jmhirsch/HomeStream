@@ -30,8 +30,6 @@ public class UI extends JFrame {
 
     private final Controller controller;
 
-
-
     private JPanel videoPanel;
     private JPanel audioPanel;
     private JPanel subtitlePanel;
@@ -59,8 +57,6 @@ public class UI extends JFrame {
     private JCheckBox useLoginBox;
     private JLabel usernameLabel;
     private JLabel passwordLabel;
-
-
 
 
 
@@ -176,8 +172,6 @@ public class UI extends JFrame {
         setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        System.out.println(remoteIPTextField.getWidth());
-
     }
 
     private JPanel createToolbarPanels() {
@@ -194,7 +188,6 @@ public class UI extends JFrame {
 
         return bottomPanel;
     }
-
 
     private void createGeneralPanel(JPanel container){
         generalPanel = new JPanel();
@@ -236,13 +229,11 @@ public class UI extends JFrame {
         usernameLabel = new JLabel("Username:");
         passwordLabel = new JLabel("Password:");
 
-
         loginPanel.add(useLoginBox, "wrap");
         loginPanel.add(usernameLabel,"gap left 20, ax right");
         loginPanel.add(usernameField, "w 120!, wrap");
         loginPanel.add(passwordLabel, "gap left 20, ax right");
         loginPanel.add(passwordField, "w 120!, wrap");
-
 
         setDefaultPanelSettings(loginPanel, container);
     }
@@ -339,8 +330,6 @@ public class UI extends JFrame {
         container.add(panelToSet);
 
     }
-
-
 
     public void startService(int portNum){
         refreshIP();
