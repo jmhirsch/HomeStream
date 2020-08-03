@@ -87,6 +87,7 @@ public class UI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         focusLabel.grabFocus();
+        generalPanel.callbackAction(); // will start streaming if auto streaming is enabled
     }
 
     public void processFileChooserInput(String s) {

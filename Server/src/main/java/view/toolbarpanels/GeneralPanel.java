@@ -7,17 +7,20 @@ import view.UI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 public class GeneralPanel extends AbstractToolbarPanel  {
-    public static final String FOLDER_PATH_FIELD_DEFAULT_TEXT = "Not set";
-    public static final String START_SERVICE_STR = "Start Service";
-    public static final String STOP_SERVICE_STR = "Stop Service";
-    public static final String RUNNING_LABEL_STR = "Running...";
+    private static final String FOLDER_PATH_FIELD_DEFAULT_TEXT = "Not set";
+    private static final String START_SERVICE_STR = "Start Streaming";
+    private static final String STOP_SERVICE_STR = "Stop Streaming";
+    private static final String RUNNING_LABEL_STR = "Streaming...";
 
     private final JButton toggleServiceButton;
     private final JButton rootFolderChooserButton;
+    private final JCheckBox autoStartCheckbox;
     private final JTextField folderPathField;
     private final JLabel runningLabel;
     private final UI ui;
@@ -52,6 +55,14 @@ public class GeneralPanel extends AbstractToolbarPanel  {
             }
         });
 
+        autoStartCheckbox = new JCheckBox("Start streaming automatically");
+        autoStartCheckbox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                PropertyService.getInstance().setProperty(Property.AUTO_LAUNCH_SERVER, autoStartCheckbox.isSelected());
+            }
+        });
+
         toggleServiceButton = new JButton(START_SERVICE_STR);
         toggleServiceButton.setEnabled(false);
         toggleServiceButton.addActionListener(e -> {
@@ -79,7 +90,8 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         add(rootFolderChooserButton, "wrap");
         add(new JLabel());
         add(toggleServiceButton, "split 2");
-        add(runningLabel);
+        add(runningLabel, "wrap");
+        add(autoStartCheckbox, "skip, ax left");
     }
 
     public void startService(){
@@ -109,6 +121,9 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
     public void callbackAction(){
 
+        if (autoStartCheckbox.isSelected()) {
+            startService();
+        }
     }
 
     private Void toggleService(boolean toggle) {
@@ -134,6 +149,11 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         if (folderPathField.getText().contains("/"));{
             toggleServiceButton.setEnabled(true);
         }
+
+        boolean autoStart = PropertyService.getInstance().getPropertyAsBool(Property.AUTO_LAUNCH_SERVER);
+
+        autoStartCheckbox.setSelected(autoStart);
+
     }
 
     @Override
