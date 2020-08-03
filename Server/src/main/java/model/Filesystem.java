@@ -1,6 +1,6 @@
-package Model;
+package model;
 
-import Enums.FileType;
+import enums.FileType;
 
 import java.io.File;
 

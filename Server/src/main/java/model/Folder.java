@@ -1,7 +1,7 @@
-package Model;
+package model;
 
-import Controller.Controller;
-import Enums.FileType;
+import controller.Controller;
+import enums.FileType;
 import org.json.JSONObject;
 
 import java.io.File;

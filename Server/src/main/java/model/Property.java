@@ -1,4 +1,4 @@
-package Model;
+package model;
 
 public enum Property {
     AUTO_LAUNCH_SERVER("auto_launch_server"), // bool

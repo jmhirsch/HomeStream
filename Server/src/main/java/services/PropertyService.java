@@ -1,7 +1,7 @@
-package Services;
+package services;
 
-import Controller.Controller;
-import Model.Property;
+import controller.Controller;
+import model.Property;
 
 import java.io.*;
 import java.nio.file.Files;

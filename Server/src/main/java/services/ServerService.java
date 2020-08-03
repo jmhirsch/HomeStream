@@ -1,7 +1,7 @@
-package Services;
+package services;
 
-import Exceptions.CouldNotFindIPException;
-import View.Main;
+import exceptions.CouldNotFindIPException;
+import controller.Main;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 

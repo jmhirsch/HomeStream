@@ -1,7 +1,7 @@
-package View;
+package controller;
 
-import Controller.Controller;
-import Services.PropertyService;
+import services.PropertyService;
+import view.UI;
 
 import javax.swing.*;
 

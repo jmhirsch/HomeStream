@@ -1,9 +1,9 @@
-package Controller;
+package controller;
 
-import Model.CFile;
-import Model.Folder;
-import Services.ServerService;
-import Services.StreamingService;
+import model.CFile;
+import model.Folder;
+import services.ServerService;
+import services.StreamingService;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;

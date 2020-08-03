@@ -1,7 +1,7 @@
-package Services;
+package services;
 
-import Controller.Controller;
-import Model.CFile;
+import controller.Controller;
+import model.CFile;
 import org.bytedeco.javacpp.Loader;
 
 import java.io.BufferedReader;

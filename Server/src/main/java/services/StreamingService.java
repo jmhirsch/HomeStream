@@ -1,7 +1,7 @@
-package Services;
+package services;
 
-import Controller.Controller;
-import Model.CFile;
+import controller.Controller;
+import model.CFile;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
