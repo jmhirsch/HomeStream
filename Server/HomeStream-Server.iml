@@ -16,7 +16,7 @@
     </content>
     <orderEntry type="jdk" jdkName="12" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../lib/annotations-19.0.0.jar!/" />
@@ -25,43 +25,43 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="org.json:json:20200518" level="project" />
-    <orderEntry type="library" name="MigLayout" level="project" />
-    <orderEntry type="library" name="VAqua7" level="project" />
-    <orderEntry type="library" name="Maven: com.github.kokorin.jaffree:jaffree:0.9.6" level="project" />
-    <orderEntry type="library" name="Maven: commons-io:commons-io:2.7" level="project" />
-    <orderEntry type="library" name="Maven: org.json:json:20200518" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg-platform:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp-platform:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:android-arm:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:android-arm64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:android-x86:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:android-x86_64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:ios-arm64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:ios-x86_64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:linux-armhf:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:linux-arm64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:linux-ppc64le:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:linux-x86:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:linux-x86_64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:macosx-x86_64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:windows-x86:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:windows-x86_64:1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:android-arm:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:android-arm64:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:android-x86:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:android-x86_64:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:linux-x86:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:linux-x86_64:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:linux-armhf:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:linux-arm64:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:linux-ppc64le:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:macosx-x86_64:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:windows-x86:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:ffmpeg:windows-x86_64:4.2.2-1.5.3" level="project" />
-    <orderEntry type="library" name="Maven: com.miglayout:miglayout-swing:5.2" level="project" />
-    <orderEntry type="library" name="Maven: com.miglayout:miglayout-core:5.2" level="project" />
+    <orderEntry type="library" exported="" name="org.json:json:20200518" level="project" />
+    <orderEntry type="library" exported="" name="MigLayout" level="project" />
+    <orderEntry type="library" exported="" name="VAqua7" level="project" />
+    <orderEntry type="library" exported="" name="Maven: com.github.kokorin.jaffree:jaffree:0.9.6" level="project" />
+    <orderEntry type="library" exported="" name="Maven: commons-io:commons-io:2.7" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.json:json:20200518" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg-platform:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp-platform:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:android-arm:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:android-arm64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:android-x86:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:android-x86_64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:ios-arm64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:ios-x86_64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:linux-armhf:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:linux-arm64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:linux-ppc64le:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:linux-x86:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:linux-x86_64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:macosx-x86_64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:windows-x86:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:javacpp:windows-x86_64:1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:android-arm:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:android-arm64:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:android-x86:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:android-x86_64:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:linux-x86:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:linux-x86_64:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:linux-armhf:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:linux-arm64:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:linux-ppc64le:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:macosx-x86_64:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:windows-x86:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: org.bytedeco:ffmpeg:windows-x86_64:4.2.2-1.5.3" level="project" />
+    <orderEntry type="library" exported="" name="Maven: com.miglayout:miglayout-swing:5.2" level="project" />
+    <orderEntry type="library" exported="" name="Maven: com.miglayout:miglayout-core:5.2" level="project" />
   </component>
 </module>
