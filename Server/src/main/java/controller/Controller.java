@@ -43,6 +43,7 @@ public class Controller {
         currentPath = path;
         root = new Folder(new File(path));
         System.out.println("root path: " + root.getFile().getPath());
+        System.out.println(root.getJSONItems().toString());
     }
 
     public void startServerService(int portNum, Function<Boolean, Void> callback){
@@ -150,8 +151,7 @@ public class Controller {
                  response.put("message", "a message");
                  response.put("currentFolder", folder.getFile().getName());
                  response.put("path", folder.getPathFromRoot());
-                 response.put("folders", folder.getJSONTopLevelFolders());
-                 response.put("files", folder.getJSONFiles());
+                 response.put("folders", folder.getJSONItems());
                  responseCode = 200;
              }
              else{

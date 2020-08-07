@@ -2,6 +2,7 @@ package model;
 
 import controller.Controller;
 import enums.FileType;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -40,8 +41,6 @@ public class Folder extends Filesystem {
         sort();
     }
 
-
-
     private void sort() {
         Collections.sort(folders);
         Collections.sort(files);
@@ -58,11 +57,12 @@ public class Folder extends Filesystem {
         }
     }
 
-    private void addSubfolders(File file) {
-        File [] subfolders = file.listFiles(File::isDirectory);
+    private void addSubfolders(File folder) {
+        File [] subfolders = folder.listFiles(File::isDirectory);
         if (subfolders != null) {
             for (File subfolder: subfolders){
-                if (subfolder.getName().equals(Controller.CACHE_FOLDER_IGNORE_STR)){
+                if (subfolder.getName().contains(Controller.CACHE_FOLDER_IGNORE_STR) ||
+                subfolder.getName().startsWith(".")){
                     continue;
                 }
                 folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot()));
@@ -100,12 +100,34 @@ public class Folder extends Filesystem {
         JSONObject items = new JSONObject();
         items.put("subfolders", getTopLevelFolderNames());
         System.out.println("got items");
+
+
+
+
+        JSONObject itemsV2 = new JSONObject();
         return items;
     }
 
-    public JSONObject getJSONFiles(){
+    public JSONObject getJSONItems(){
         JSONObject items = new JSONObject();
+        items.put("name", getName());
+        items.put("path", getPathFromRoot());
         items.put("files", getFileNames());
+        JSONArray subfolders = new JSONArray();
+
+        for (Folder subfolder: folders){
+            subfolders.put(subfolder.getJSONItems());
+        }
+
+        items.put("subfolders", subfolders);
+        return items;
+    }
+
+
+
+    public JSONArray getJSONFiles(){
+        JSONArray items = new JSONArray();
+        items.put(getFileNames());
         return items;
     }
 
