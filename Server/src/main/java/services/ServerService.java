@@ -1,9 +1,9 @@
 package services;
 
-import exceptions.CouldNotFindIPException;
-import controller.Main;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import controller.Main;
+import exceptions.CouldNotFindIPException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,8 +30,6 @@ public class ServerService {
         }
         return instance;
     }
-
-
 
     public double startServer(Function <Double, Void> contextCreator, int portNum){
         secureKey = new Random().nextDouble();
