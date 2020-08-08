@@ -61,6 +61,7 @@ public class Controller {
         System.out.println("removed contexts");
         processFileChooserInput(root.getFile().getPath());
         ServerService.getInstance().removeContext(secureKey, GET_DATA_HANDLER_PATH);
+        ServerService.getInstance().removeContext(secureKey, REFRESH_HANDLER_PATH);
         createContexts(secureKey);
         System.out.println("Readded contexts");
         return null;
@@ -68,7 +69,7 @@ public class Controller {
 
     private void removeContexts(Folder folder) {
         for (CFile file : folder.getFiles()) {
-            ServerService.getInstance().removeContext(secureKey, file.getPathFromRoot());
+            ServerService.getInstance().removeContext(secureKey, "/" + file.getHash() + "/");
         }
 
         for (Folder subFolder : folder.getFolders()) {
@@ -99,7 +100,8 @@ public class Controller {
 
 
         for (CFile file : folder.getFiles()) {
-            ServerService.getInstance().addContext(secureKey, file.getPathFromRoot(), new FileHandler(file, secureKey));
+            ServerService.getInstance().addContext(secureKey, "/" + file.getHash() + "/", new FileHandler(file, secureKey));
+            System.out.println("/" + file.getHash() + "/");
         }
 
         for (Folder subFolder : folder.getFolders()) {

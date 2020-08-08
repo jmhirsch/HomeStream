@@ -20,15 +20,15 @@ public class Folder extends Filesystem {
     private List<CFile> files = new ArrayList<>();
 
     public Folder(File file) {
-        super(file, FileType.FOLDER);
+        super(file, FileType.FOLDER, 0);
         this.pathFromRoot = "";
 
         setup(file);
             this.pathFromRoot = "/";
     }
 
-    private Folder(File file, String pathFromRoot, Filesystem root){
-        super(file, FileType.FOLDER, root);
+    private Folder(File file, String pathFromRoot, Filesystem root, double hash){
+        super(file, FileType.FOLDER, root, hash);
 
         this.pathFromRoot =  pathFromRoot + "/" + getName();
         setup(file);
@@ -51,7 +51,7 @@ public class Folder extends Filesystem {
         if (files != null) {
             for (File subfile: files){
                 if (!subfile.getName().startsWith(".") && isMovieOrSubtitle(subfile.getName())) {
-                    this.files.add(new CFile(subfile, this.pathFromRoot, this.getRoot()));
+                    this.files.add(new CFile(subfile, this.pathFromRoot, this.getRoot(), this.getHash()));
                 }
             }
         }
@@ -65,7 +65,7 @@ public class Folder extends Filesystem {
                 subfolder.getName().startsWith(".")){
                     continue;
                 }
-                folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot()));
+                folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot(), this.getHash()));
             }
         }
     }
@@ -111,8 +111,9 @@ public class Folder extends Filesystem {
     public JSONObject getJSONItems(){
         JSONObject items = new JSONObject();
         items.put("name", getName());
+        items.put("hash", getHash());
         items.put("path", getPathFromRoot());
-        items.put("files", getFileNames());
+        items.put("files", getJSONFiles());
         JSONArray subfolders = new JSONArray();
 
         for (Folder subfolder: folders){
@@ -127,7 +128,9 @@ public class Folder extends Filesystem {
 
     public JSONArray getJSONFiles(){
         JSONArray items = new JSONArray();
-        items.put(getFileNames());
+        for (CFile file: files){
+            items.put(file.getJSONFile());
+        }
         return items;
     }
 
