@@ -5,24 +5,24 @@ import enums.FileType;
 import org.json.JSONObject;
 
 import java.io.File;
-
-public class CFile extends Filesystem {
-
-
-    private final String nameStripExtension;
+/*
+Defines a network file object used to pass to a server
+ */
+public class NetworkFile extends NetworkFilesystem {
+    private final String nameWithoutExtension;
     private final String extension;
 
-    public CFile(File file, String pathFromRoot, Filesystem root, long hash) {
+    public NetworkFile(File file, String pathFromRoot, NetworkFilesystem root, long hash) {
         super(file, FileType.FILE, root, hash);
-
         this.pathFromRoot = pathFromRoot + "/" + getName();
-
+        // enables retrieving just the name or just the extension
         int extensionIndex = file.getName().lastIndexOf('.');
-        this.nameStripExtension = file.getName().substring(0, extensionIndex);
+        this.nameWithoutExtension = file.getName().substring(0, extensionIndex);
         this.extension = file.getName().substring(extensionIndex);
     }
 
 
+    // Returns a JSONObject of the file containing its name and its hash
     public JSONObject getJSONFile(){
         JSONObject jsonFile = new JSONObject();
         jsonFile.put("name", getName());
@@ -30,8 +30,8 @@ public class CFile extends Filesystem {
         return jsonFile;
     }
 
-    public String getNameStripExtension() {
-        return this.nameStripExtension;
+    public String getNameWithoutExtension() {
+        return this.nameWithoutExtension;
     }
 
     public String getExtension(){

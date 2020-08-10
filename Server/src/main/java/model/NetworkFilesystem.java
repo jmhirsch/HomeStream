@@ -4,23 +4,26 @@ import enums.FileType;
 
 import java.io.File;
 
-public abstract class Filesystem implements Comparable<Filesystem>{
+/*
+Abstract filesystem objects which represents files and folders that will be sent through the server
+ */
+public abstract class NetworkFilesystem implements Comparable<NetworkFilesystem>{
     private final File file;
     private final FileType type;
-    private final long hash;
+    private final long hash; // unique hash generated for each file and each folder
 
-    private final Filesystem root;
-    protected String pathFromRoot;
+    private final NetworkFilesystem root; // root object
+    protected String pathFromRoot; // path from the root object
 
-
-    public Filesystem(File file, FileType type, long hash){
+// Constructor for root object
+    public NetworkFilesystem(File file, FileType type, long hash){
         this.file = file;
         this.type = type;
         this.root = this;
         this.hash = hash(hash);
     }
 
-    public Filesystem(File file, FileType type, Filesystem root, long hash){
+    public NetworkFilesystem(File file, FileType type, NetworkFilesystem root, long hash){
         this.file = file;
         this.type = type;
         this.root = root;
@@ -55,17 +58,17 @@ public abstract class Filesystem implements Comparable<Filesystem>{
         return pathFromRoot;
     }
 
-    public Filesystem getRoot(){
+    public NetworkFilesystem getRoot(){
         return root;
     }
 
-    public int compareTo(Filesystem f2){
+    public int compareTo(NetworkFilesystem f2){
         return this.getFile().getName().compareToIgnoreCase(f2.getFile().getName());
     }
 
+    //Generate a hashcode using another hashcode as a base
     protected long hash(long previousHash){
         return this.getName().hashCode() + this.type.hashCode() + previousHash;
         
     }
-
 }

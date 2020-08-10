@@ -1,7 +1,7 @@
 package view.toolbarpanels;
 
 import exceptions.CouldNotFindIPException;
-import model.Property;
+import enums.Property;
 import net.miginfocom.swing.MigLayout;
 import services.PropertyService;
 import services.ServerService;

@@ -1,5 +1,7 @@
-package model;
-
+package enums;
+/*
+Defines a set of enums used to save preferences to a file.
+ */
 public enum Property {
     AUTO_LAUNCH_SERVER("auto_launch_server"), // bool
     LOCAL_PORT("local_port"), // int

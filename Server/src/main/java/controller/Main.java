@@ -22,6 +22,7 @@ public class Main {
                 System.setProperty("apple.awt.application.name", "HomeStream");
                 System.setProperty("apple.awt.textantialiasing", "true");
                 System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
+                System.setProperty("apple.awt.fileDialogForDirectories", "true");
                 UIManager.setLookAndFeel("org.violetlib.aqua.AquaLookAndFeel");
                 //setUIFont(new FontUIResource("Lucida Grande", Font.PLAIN, 13));
             }
