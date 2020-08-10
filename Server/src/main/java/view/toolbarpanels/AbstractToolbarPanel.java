@@ -17,9 +17,7 @@ public abstract class AbstractToolbarPanel extends JPanel implements Loadable, S
         save();
     }
     @Override
-    public void focusGained(FocusEvent event){
-
-    }
+    public void focusGained(FocusEvent event){;}
 
     @Override
     public void focusLost(FocusEvent event){

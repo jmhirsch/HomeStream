@@ -1,7 +1,7 @@
 package services;
 
 import controller.Controller;
-import model.CFile;
+import model.NetworkFile;
 import org.bytedeco.javacpp.Loader;
 
 import java.io.BufferedReader;
@@ -24,7 +24,7 @@ public class M3U8EncoderService {
     private final String pathToCacheFolder;
 
 
-    public M3U8EncoderService(String pathToMovieCacheFolder, CFile fileToEncode, String pathToPlaylistFile){
+    public M3U8EncoderService(String pathToMovieCacheFolder, NetworkFile fileToEncode, String pathToPlaylistFile){
         this.pathToMovieCacheFolder = fileToEncode.getRoot().getFile().getPath() + pathToMovieCacheFolder;
         this.pathToPlaylistFile = pathToPlaylistFile;
         this.pathToCacheFolder = fileToEncode.getRoot().getFile().getPath() + Controller.PATH_TO_CACHE_FOLDER;
@@ -52,7 +52,7 @@ public class M3U8EncoderService {
         }
     }
 
-    private void encodeToM3U8(CFile fileToEncode){
+    private void encodeToM3U8(NetworkFile fileToEncode){
         String ffmpeg = Loader.load(org.bytedeco.ffmpeg.ffmpeg.class);
         String extension = fileToEncode.getExtension();
 
@@ -68,12 +68,12 @@ public class M3U8EncoderService {
             commandList.add(fileToEncode.getFile().getPath());
             commandList.addAll(getMP4EncodeOptions());
         } else if (extension.equals(".mkv")){
-            String pathOfNewFileToEncode = pathToMovieCacheFolder + fileToEncode.getNameStripExtension() + ".mp4";
+            String pathOfNewFileToEncode = pathToMovieCacheFolder + fileToEncode.getNameWithoutExtension() + ".mp4";
             commandList.add(pathOfNewFileToEncode);
             encodeToMP4(fileToEncode);
             commandList.addAll(getMKVEncodeOptions());
         } else if (extension.equals(".avi")){
-            String pathOfNewFileToEncode = pathToMovieCacheFolder + fileToEncode.getNameStripExtension() + ".mp4";
+            String pathOfNewFileToEncode = pathToMovieCacheFolder + fileToEncode.getNameWithoutExtension() + ".mp4";
             commandList.add(pathOfNewFileToEncode);
             encodeToMP4(fileToEncode);
             commandList.addAll(getAVIEncodeOptions());
@@ -89,7 +89,7 @@ public class M3U8EncoderService {
 
 
 
-    private void encodeToMP4(CFile fileToEncode) {
+    private void encodeToMP4(NetworkFile fileToEncode) {
 
         boolean fileIsH264 =  checkCodecIsH264(fileToEncode);
 
@@ -113,7 +113,7 @@ public class M3U8EncoderService {
             commandList.add("h264");
         }
 
-        commandList.add(pathToMovieCacheFolder + fileToEncode.getNameStripExtension() + ".mp4");
+        commandList.add(pathToMovieCacheFolder + fileToEncode.getNameWithoutExtension() + ".mp4");
 
         ProcessBuilder pb = new ProcessBuilder(commandList);
         startEncoding(pb);
@@ -150,7 +150,7 @@ public class M3U8EncoderService {
         return commandList;
     }
 
-    private boolean checkCodecIsH264(CFile fileToEncode) {
+    private boolean checkCodecIsH264(NetworkFile fileToEncode) {
         String ffprobe = Loader.load(org.bytedeco.ffmpeg.ffprobe.class);
         ProcessBuilder pb = new ProcessBuilder(ffprobe, "-show_streams", "-i" , fileToEncode.getFile().getPath());
 
@@ -172,9 +172,11 @@ public class M3U8EncoderService {
             String codecs = sb.toString();
             System.out.println(sb.toString());
 
-            if (codecs.contains("H.264") || codecs.contains("h.264") || codecs.contains("MPEG-4")){
-                return true;
-            }
+            return true;
+
+//            if (codecs.contains("H.264") || codecs.contains("h.264") || codecs.contains("MPEG-4")){
+//                return true;
+//            }
 
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();

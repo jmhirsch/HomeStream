@@ -1,17 +1,19 @@
 package view.toolbarpanels;
 
-import model.Property;
+import enums.Property;
 import net.miginfocom.swing.MigLayout;
 import services.PropertyService;
 import view.UI;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
+/*
+General panel, to be used inside a CustomToolbar.
+Expects Unix filesystem TODO: enable windows type filesystems as well
+ */
 public class GeneralPanel extends AbstractToolbarPanel  {
     private static final String FOLDER_PATH_FIELD_DEFAULT_TEXT = "Not set";
     private static final String START_SERVICE_STR = "Start Streaming";
@@ -31,9 +33,7 @@ public class GeneralPanel extends AbstractToolbarPanel  {
     public GeneralPanel(UI ui) {
         this.ui = ui;
 
-
         selectServerFolderDialog = new FileDialog(ui, view.UI.CHOOSE_MOVIE_FOLDER, FileDialog.LOAD);
-        System.setProperty("apple.awt.fileDialogForDirectories", "true");
         selectServerFolderDialog.setMultipleMode(false);
         selectServerFolderDialog.setDirectory("~");
 
@@ -46,22 +46,15 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         folderPathField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                ui.sendFocus();
+                ui.giveUpFocusToLabel();
                     chooseBaseFolder();
             }
-
             @Override
-            public void focusLost(FocusEvent e) {
-            }
+            public void focusLost(FocusEvent e) {;}
         });
 
         autoStartCheckbox = new JCheckBox("Start streaming automatically");
-        autoStartCheckbox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                PropertyService.getInstance().setProperty(Property.AUTO_LAUNCH_SERVER, autoStartCheckbox.isSelected());
-            }
-        });
+        autoStartCheckbox.addActionListener(e -> PropertyService.getInstance().setProperty(Property.AUTO_LAUNCH_SERVER, autoStartCheckbox.isSelected()));
 
         toggleServiceButton = new JButton(START_SERVICE_STR);
         toggleServiceButton.setEnabled(false);
@@ -120,7 +113,6 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
 
     public void callbackAction(){
-
         if (autoStartCheckbox.isSelected()) {
             startService();
         }

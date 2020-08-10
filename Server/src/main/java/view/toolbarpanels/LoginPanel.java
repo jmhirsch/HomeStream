@@ -1,6 +1,6 @@
 package view.toolbarpanels;
 
-import model.Property;
+import enums.Property;
 import net.miginfocom.swing.MigLayout;
 import services.PropertyService;
 import view.UI;
