@@ -1,18 +1,18 @@
 package services;
 
 import controller.Controller;
-import model.Property;
+import enums.Property;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+//TODO: Property service should not be a singleton, but should be created and passed as a parameter if necessary
 public class PropertyService {
     public static PropertyService instance;
 
     private static final String PROPERTY_FILE = "config.properties";
-
 
     private Properties properties;
     private Properties defaultProperties;
@@ -27,8 +27,6 @@ public class PropertyService {
        }
     }
 
-
-
     public static PropertyService getInstance(){
         if (instance == null){
             instance = new PropertyService();
@@ -36,13 +34,14 @@ public class PropertyService {
         return instance;
     }
 
-
+    //Restore default properties and save to file
     private void restoreDefaults(){
         createDefaults();
         properties = defaultProperties;
         save();
     }
 
+    //defines default properties to be used in the event that the user file is deleted or doesn't exist
     private void createDefaults(){
         defaultProperties.setProperty(Property.AUTO_LAUNCH_SERVER.toString(), String.valueOf(false));
         defaultProperties.setProperty(Property.LOCAL_PORT.toString(), String.valueOf(Controller.DEFAULT_PORT));
@@ -60,6 +59,9 @@ public class PropertyService {
         return Files.exists(Path.of(PROPERTY_FILE));
     }
 
+    //Assigns string to specified property
+    //Null Strings will be written as "null"
+    //Calls save()
     public void setProperty(Property property, String value) {
         if (value == null){
             value = "null";
@@ -68,14 +70,17 @@ public class PropertyService {
         save();
     }
 
+    //Assigns boolean to specified property
     public void setProperty(Property property, boolean bool){
         this.setProperty(property, String.valueOf(bool));
     }
 
+    //Assigns int to specifiedproperty
     public void setProperty(Property property, int num){
         this.setProperty(property, String.valueOf(num));
     }
 
+    //returns a string of the specified property
     public String getProperty(Property property){
         load();
 
@@ -87,10 +92,12 @@ public class PropertyService {
     }
 
 
+    //Returns a boolean of the specified property
     public Boolean getPropertyAsBool(Property property){
         return Boolean.valueOf(getProperty(property));
     }
 
+    //Returns an int of the specified property
     public int getPropertyAsInt(Property property){
         int propInt = -1;
         try{
@@ -102,6 +109,7 @@ public class PropertyService {
     }
 
 
+    //Save all properties to file
     public void save(){
         try {
             FileOutputStream out = new FileOutputStream(PROPERTY_FILE);
@@ -112,6 +120,7 @@ public class PropertyService {
         }
     }
 
+    //reload all data from file. Will restore defaults if file doesn't exist or other errors are found
     public void load() {
         try {
             if (!configExists()){
@@ -123,7 +132,7 @@ public class PropertyService {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            properties = null;
+            restoreDefaults();
         }
     }
 }

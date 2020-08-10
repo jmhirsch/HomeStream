@@ -3,8 +3,8 @@ package controller;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import model.CFile;
-import model.Folder;
+import model.NetworkFile;
+import model.NetworkFolder;
 import org.json.JSONObject;
 import services.ServerService;
 import services.StreamingService;
@@ -15,6 +15,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.function.Function;
+
+/*
+Defines
+ */
 
 public class Controller {
 
@@ -28,11 +32,15 @@ public class Controller {
     public static final String GET_DATA_HANDLER_PATH = "/get-data/";
     public static final String REFRESH_HANDLER_PATH = "/Refresh/";
 
+    private static final String[] extensionlist = {".mp4", ".m4a", ".m4v", ".f4v", ".fa4", ".m4b", ".m4r", ".f4b", ".mov", ".3gp",
+            ".3gp2", ".3g2", ".3gpp", ".3gpp2", ".ogg", ".oga", ".ogv", ".ogx", ".wmv", ".wma",
+            ".webm", ".flv", ".avi", ".mpg", ".mkv", ".ts", ".srt"};
+
 
     private String currentPath;
     private int portNum;
     private ServerService serverService;
-    private Folder root;
+    private NetworkFolder root;
     private double secureKey;
 
     public Controller() {
@@ -42,17 +50,16 @@ public class Controller {
 
     public void processFileChooserInput(String path) {
         currentPath = path;
-        root = new Folder(new File(path));
+        root = new NetworkFolder(new File(path), extensionlist, new String[]{CACHE_FOLDER_IGNORE_STR});
         System.out.println("root path: " + root.getFile().getPath());
-        //System.out.println(root.getJSONItems().toString());
     }
 
     public void startServerService(int portNum, Function<Boolean, Void> callback) {
         if (!currentPath.equals("")) { // ensure a folder is actually selected
             this.portNum = portNum;
             serverService = ServerService.getInstance();
-            secureKey = serverService.startServer(this::createContexts, portNum);
-            callback.apply(true);
+            boolean created = serverService.startServer(this::createContexts, portNum);
+            callback.apply(created);
         }
     }
 
@@ -67,12 +74,11 @@ public class Controller {
         return null;
     }
 
-    private void removeContexts(Folder folder) {
-        for (CFile file : folder.getFiles()) {
+    private void removeContexts(NetworkFolder folder) {
+        for (NetworkFile file : folder.getFiles()) {
             ServerService.getInstance().removeContext(secureKey, "/" + file.getHash());
         }
-
-        for (Folder subFolder : folder.getFolders()) {
+        for (NetworkFolder subFolder : folder.getFolders()) {
             removeContexts(subFolder);
         }
     }
@@ -92,28 +98,27 @@ public class Controller {
         return null;
     }
 
-    private void createContexts(Folder folder) {
+    private void createContexts(NetworkFolder folder) {
         if (folder.getName().equals(CACHE_FOLDER_IGNORE_STR)) {
             System.out.println("ignoring cache folder");
             return;
         }
 
-        for (CFile file : folder.getFiles()) {
+        for (NetworkFile file : folder.getFiles()) {
             ServerService.getInstance().addContext(secureKey, "/" + file.getHash(), new FileHandler(file, secureKey));
             System.out.println("/" + file.getHash());
         }
 
-        for (Folder subFolder : folder.getFolders()) {
+        for (NetworkFolder subFolder : folder.getFolders()) {
             createContexts(subFolder);
         }
     }
 
     static class FileHandler implements HttpHandler {
-
-        private final CFile file;
+        private final NetworkFile file;
         private final double secureKey;
 
-        public FileHandler(CFile file, double secureKey) {
+        public FileHandler(NetworkFile file, double secureKey) {
             this.file = file;
             this.secureKey = secureKey;
         }
@@ -131,9 +136,9 @@ public class Controller {
     }
 
     static class FolderHandler implements HttpHandler {
-        private final Folder folder;
+        private final NetworkFolder folder;
 
-        public FolderHandler(Folder folder) {
+        public FolderHandler(NetworkFolder folder) {
             this.folder = folder;
         }
 

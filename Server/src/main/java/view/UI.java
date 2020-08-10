@@ -1,7 +1,7 @@
 package view;
 
 import controller.Controller;
-import model.Property;
+import enums.Property;
 import services.PropertyService;
 import view.toolbarpanels.AbstractToolbarPanel;
 import view.toolbarpanels.GeneralPanel;
@@ -16,6 +16,10 @@ import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.function.Function;
 
+/*
+Defines the UI of the class. Optimized for MacOS, not tested on Windows or linux
+ */
+//TODO: pass PropertyService
 public class UI extends JFrame {
     public static final String CHOOSE_MOVIE_FOLDER = "Choose Movie Folder";
     public static final String MIG_WRAP = "wrap";
@@ -39,27 +43,29 @@ public class UI extends JFrame {
     private AbstractToolbarPanel loginPanel;
     private AbstractToolbarPanel networkPanel;
 
+    //Label used to grab focus when program starts
+    private final JLabel focusLabel;
 
 
-    private JLabel focusLabel;
-
-
-    public UI(Controller controller){
+    public UI(Controller controller) {
         this.controller = controller;
         Container contentPane = getContentPane();
-        Desktop desktop = Desktop.getDesktop();
 
+        //Defines About Menu actions. Not currently used
+        Desktop desktop = Desktop.getDesktop();
         desktop.setPreferencesHandler(e ->
                 JOptionPane.showMessageDialog(null, "Handle Preferences"));
 
         setResizable(false);
         setMinimumSize(new Dimension(WIDTH, 0));
-        setMaximumSize(new Dimension( WIDTH, Integer.MAX_VALUE));
+        setMaximumSize(new Dimension(WIDTH, Integer.MAX_VALUE));
 
 
         JPanel bottomPanel = createToolbarPanels();
 
+        ArrayList<ToolbarButtonBuilder> buttonBuilderList = createToolBarButtons();
         CustomToolbar toolBar = new CustomToolbar(createToolBarButtons(), this::revalidate);
+        buttonBuilderList.clear(); // clear list once objets are created
         toolBar.setLayout(new FlowLayout(FlowLayout.LEADING));
         toolBar.setFloatable(false);
 
@@ -72,6 +78,7 @@ public class UI extends JFrame {
 
         loadFromFile();
 
+        //Save all data on window close event
         WindowListener exitListener = new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -94,7 +101,8 @@ public class UI extends JFrame {
         controller.processFileChooserInput(s);
     }
 
-    private void save(){
+    //Call save on all subpanels
+    private void save() {
         generalPanel.save();
         loginPanel.save();
         networkPanel.save();
@@ -109,6 +117,8 @@ public class UI extends JFrame {
         networkPanel.load();
     }
 
+    //Create the toolbar panels from specified objects, and adds them to the bottomPanel.
+    //Returns created panel
     private JPanel createToolbarPanels() {
         JPanel bottomPanel = new JPanel(new FlowLayout());
         bottomPanel.setOpaque(true);
@@ -129,55 +139,61 @@ public class UI extends JFrame {
         return bottomPanel;
     }
 
-    private void createVideoPanel(JPanel container){
+    //Will be removed
+    private void createVideoPanel(JPanel container) {
         videoPanel = new JPanel();
         videoPanel.add(new JLabel("video settings"), BorderLayout.CENTER);
         setDefaultPanelSettings(videoPanel, container);
     }
 
-    private void createAudioPanel(JPanel container){
+    //Will be removed
+    private void createAudioPanel(JPanel container) {
         audioPanel = new JPanel();
         audioPanel.add(new JLabel("audio settings"), BorderLayout.CENTER);
         setDefaultPanelSettings(audioPanel, container);
     }
 
-    private void createSubtitlePanel(JPanel container){
+    //Will be removed
+    private void createSubtitlePanel(JPanel container) {
         subtitlePanel = new JPanel();
         subtitlePanel.add(new JLabel("subtitle settings"), BorderLayout.CENTER);
         setDefaultPanelSettings(subtitlePanel, container);
     }
 
-    private void setDefaultPanelSettings(JPanel panelToSet, JPanel container){
+    //Defined default settings to apply to all panels
+    private void setDefaultPanelSettings(JPanel panelToSet, JPanel container) {
         panelToSet.setVisible(false);
         container.add(panelToSet);
 
     }
 
-     public void startService(Function<Boolean, Void> toggleService){
+    //Action when start service is triggered. Callbacks expects a boolean defining whether action was successful
+    public void startService(Function<Boolean, Void> serviceHasStarted) {
         networkPanel.callbackAction(); // will refresh IP
-         System.out.println("Starting...");
+        System.out.println("Starting...");
         int portNum = PropertyService.getInstance().getPropertyAsInt(Property.LOCAL_PORT);
-        controller.startServerService(portNum, toggleService);
+        controller.startServerService(portNum, serviceHasStarted);
     }
 
-    public void stopService(Function <Boolean, Void> toggleService){
+    public void stopService(Function<Boolean, Void> toggleService) {
         controller.stopServerService(toggleService);
     }
 
-    private ArrayList<ToolbarButtonBuilder> createToolBarButtons(){
-
+    //Create all buttons in the toolbar
+    private ArrayList<ToolbarButtonBuilder> createToolBarButtons() {
         ArrayList<ToolbarButtonBuilder> list = new ArrayList<>();
         list.add(new ToolbarButtonBuilder("General", generalPanel));
         list.add(new ToolbarButtonBuilder("Login", loginPanel));
         list.add(new ToolbarButtonBuilder("Network", "connection", networkPanel));
         list.add(new ToolbarButtonBuilder("Video", videoPanel));
-        list.add(new ToolbarButtonBuilder("Audio", "audio_round",audioPanel));
+        list.add(new ToolbarButtonBuilder("Audio", "audio_round", audioPanel));
         list.add(new ToolbarButtonBuilder("Subtitle", subtitlePanel));
 
         return list;
     }
 
-    private Object revalidate(String title){
+    //Used to update the UI from subpanels
+    private Object revalidate(String title) {
         pack();
         this.revalidate();
         this.repaint();
@@ -185,7 +201,8 @@ public class UI extends JFrame {
         return null;
     }
 
-    public void sendFocus() {
+    // sends focus to focusLabel
+    public void giveUpFocusToLabel() {
         focusLabel.grabFocus();
     }
 }

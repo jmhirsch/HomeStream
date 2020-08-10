@@ -1,6 +1,6 @@
 package view.toolbarpanels;
 
-import model.Property;
+import enums.Property;
 import net.miginfocom.swing.MigLayout;
 import services.PropertyService;
 import view.UI;
@@ -10,6 +10,10 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
+/*
+General panel, to be used inside a CustomToolbar.
+Expects Unix filesystem TODO: enable windows type filesystems as well
+ */
 public class GeneralPanel extends AbstractToolbarPanel  {
     private static final String FOLDER_PATH_FIELD_DEFAULT_TEXT = "Not set";
     private static final String START_SERVICE_STR = "Start Streaming";
@@ -29,9 +33,7 @@ public class GeneralPanel extends AbstractToolbarPanel  {
     public GeneralPanel(UI ui) {
         this.ui = ui;
 
-
         selectServerFolderDialog = new FileDialog(ui, view.UI.CHOOSE_MOVIE_FOLDER, FileDialog.LOAD);
-        System.setProperty("apple.awt.fileDialogForDirectories", "true");
         selectServerFolderDialog.setMultipleMode(false);
         selectServerFolderDialog.setDirectory("~");
 
@@ -44,7 +46,7 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         folderPathField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                ui.sendFocus();
+                ui.giveUpFocusToLabel();
                     chooseBaseFolder();
             }
             @Override
