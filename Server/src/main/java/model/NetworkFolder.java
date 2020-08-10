@@ -199,7 +199,7 @@ public class NetworkFolder extends NetworkFilesystem {
                 return true;
             }
         }
-        return true;
+        return false;
     }
 
     //Compares file extension to array of extensions to include
@@ -207,6 +207,7 @@ public class NetworkFolder extends NetworkFilesystem {
     // returns false otherwise
     private boolean fileExtensionExistsInList(String filename){
         if (extensionArray.length == 0){
+            System.out.println("here");
             return true;
         }
         for (String extension: extensionArray){

@@ -76,6 +76,7 @@ public class ServerService {
             server.createContext(path, handler);
             return true;
         }
+        System.out.println("Access denied");
         return false;
     }
 
@@ -107,7 +108,7 @@ public class ServerService {
 
     @Override
     public int hashCode() {
-        return Objects.hash(address, server);
+        return Objects.hash(address, server, secureKey);
     }
 
     //Returns localIP of server

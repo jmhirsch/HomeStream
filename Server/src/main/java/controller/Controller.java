@@ -90,7 +90,7 @@ public class Controller {
         callback.apply(false);
     }
 
-    private Void createContexts(double secureKey) {
+    private Void createContexts(Double secureKey) {
         this.secureKey = secureKey;
         createContexts(root);
         ServerService.getInstance().addContext(secureKey, REFRESH_HANDLER_PATH, new RefreshHandler(this::refresh));
