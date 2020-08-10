@@ -7,8 +7,6 @@ import view.UI;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
@@ -49,19 +47,12 @@ public class GeneralPanel extends AbstractToolbarPanel  {
                 ui.sendFocus();
                     chooseBaseFolder();
             }
-
             @Override
-            public void focusLost(FocusEvent e) {
-            }
+            public void focusLost(FocusEvent e) {;}
         });
 
         autoStartCheckbox = new JCheckBox("Start streaming automatically");
-        autoStartCheckbox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                PropertyService.getInstance().setProperty(Property.AUTO_LAUNCH_SERVER, autoStartCheckbox.isSelected());
-            }
-        });
+        autoStartCheckbox.addActionListener(e -> PropertyService.getInstance().setProperty(Property.AUTO_LAUNCH_SERVER, autoStartCheckbox.isSelected()));
 
         toggleServiceButton = new JButton(START_SERVICE_STR);
         toggleServiceButton.setEnabled(false);
@@ -120,7 +111,6 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
 
     public void callbackAction(){
-
         if (autoStartCheckbox.isSelected()) {
             startService();
         }

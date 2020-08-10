@@ -2,6 +2,7 @@ package model;
 
 import controller.Controller;
 import enums.FileType;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -19,15 +20,15 @@ public class Folder extends Filesystem {
     private List<CFile> files = new ArrayList<>();
 
     public Folder(File file) {
-        super(file, FileType.FOLDER);
+        super(file, FileType.FOLDER, 0);
         this.pathFromRoot = "";
 
         setup(file);
             this.pathFromRoot = "/";
     }
 
-    private Folder(File file, String pathFromRoot, Filesystem root){
-        super(file, FileType.FOLDER, root);
+    private Folder(File file, String pathFromRoot, Filesystem root, long hash){
+        super(file, FileType.FOLDER, root, hash);
 
         this.pathFromRoot =  pathFromRoot + "/" + getName();
         setup(file);
@@ -40,8 +41,6 @@ public class Folder extends Filesystem {
         sort();
     }
 
-
-
     private void sort() {
         Collections.sort(folders);
         Collections.sort(files);
@@ -52,20 +51,21 @@ public class Folder extends Filesystem {
         if (files != null) {
             for (File subfile: files){
                 if (!subfile.getName().startsWith(".") && isMovieOrSubtitle(subfile.getName())) {
-                    this.files.add(new CFile(subfile, this.pathFromRoot, this.getRoot()));
+                    this.files.add(new CFile(subfile, this.pathFromRoot, this.getRoot(), this.getHash()));
                 }
             }
         }
     }
 
-    private void addSubfolders(File file) {
-        File [] subfolders = file.listFiles(File::isDirectory);
+    private void addSubfolders(File folder) {
+        File [] subfolders = folder.listFiles(File::isDirectory);
         if (subfolders != null) {
             for (File subfolder: subfolders){
-                if (subfolder.getName().equals(Controller.CACHE_FOLDER_IGNORE_STR)){
+                if (subfolder.getName().contains(Controller.CACHE_FOLDER_IGNORE_STR) ||
+                subfolder.getName().startsWith(".")){
                     continue;
                 }
-                folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot()));
+                folders.add(new Folder(subfolder, this.pathFromRoot, this.getRoot(), this.getHash()));
             }
         }
     }
@@ -100,12 +100,37 @@ public class Folder extends Filesystem {
         JSONObject items = new JSONObject();
         items.put("subfolders", getTopLevelFolderNames());
         System.out.println("got items");
+
+
+
+
+        JSONObject itemsV2 = new JSONObject();
         return items;
     }
 
-    public JSONObject getJSONFiles(){
+    public JSONObject getJSONItems(){
         JSONObject items = new JSONObject();
-        items.put("files", getFileNames());
+        items.put("name", getName());
+        items.put("hash", getHash());
+        items.put("path", getPathFromRoot());
+        items.put("files", getJSONFiles());
+        JSONArray subfolders = new JSONArray();
+
+        for (Folder subfolder: folders){
+            subfolders.put(subfolder.getJSONItems());
+        }
+
+        items.put("subfolders", subfolders);
+        return items;
+    }
+
+
+
+    public JSONArray getJSONFiles(){
+        JSONArray items = new JSONArray();
+        for (CFile file: files){
+            items.put(file.getJSONFile());
+        }
         return items;
     }
 

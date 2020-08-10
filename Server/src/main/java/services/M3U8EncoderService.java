@@ -172,9 +172,11 @@ public class M3U8EncoderService {
             String codecs = sb.toString();
             System.out.println(sb.toString());
 
-            if (codecs.contains("H.264") || codecs.contains("h.264") || codecs.contains("MPEG-4")){
-                return true;
-            }
+            return true;
+
+//            if (codecs.contains("H.264") || codecs.contains("h.264") || codecs.contains("MPEG-4")){
+//                return true;
+//            }
 
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
