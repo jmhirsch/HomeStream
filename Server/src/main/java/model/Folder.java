@@ -27,7 +27,7 @@ public class Folder extends Filesystem {
             this.pathFromRoot = "/";
     }
 
-    private Folder(File file, String pathFromRoot, Filesystem root, double hash){
+    private Folder(File file, String pathFromRoot, Filesystem root, long hash){
         super(file, FileType.FOLDER, root, hash);
 
         this.pathFromRoot =  pathFromRoot + "/" + getName();

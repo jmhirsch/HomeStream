@@ -69,7 +69,7 @@ public class Controller {
 
     private void removeContexts(Folder folder) {
         for (CFile file : folder.getFiles()) {
-            ServerService.getInstance().removeContext(secureKey, "/" + file.getHash() + "/");
+            ServerService.getInstance().removeContext(secureKey, "/" + file.getHash());
         }
 
         for (Folder subFolder : folder.getFolders()) {
@@ -98,10 +98,9 @@ public class Controller {
             return;
         }
 
-
         for (CFile file : folder.getFiles()) {
-            ServerService.getInstance().addContext(secureKey, "/" + file.getHash() + "/", new FileHandler(file, secureKey));
-            System.out.println("/" + file.getHash() + "/");
+            ServerService.getInstance().addContext(secureKey, "/" + file.getHash(), new FileHandler(file, secureKey));
+            System.out.println("/" + file.getHash());
         }
 
         for (Folder subFolder : folder.getFolders()) {
@@ -121,8 +120,8 @@ public class Controller {
 
         @Override
         public void handle(HttpExchange t) throws IOException {
-            JSONObject response = new JSONObject();
-            response.put("file", file.getName());
+            JSONObject response = file.getJSONFile();
+            System.out.println(response);
             t.sendResponseHeaders(200, response.toString().getBytes().length);
             new StreamingService(secureKey, file);
             OutputStream os = t.getResponseBody();

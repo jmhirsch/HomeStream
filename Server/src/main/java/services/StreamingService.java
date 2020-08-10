@@ -1,12 +1,14 @@
 package services;
 
-import controller.Controller;
-import model.CFile;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import controller.Controller;
+import model.CFile;
 
 import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -20,14 +22,16 @@ public class StreamingService implements AutoCloseable {
     private String pathToTSCache;
     private ArrayList<String> paths;
     private String pathToPlaylist;
+    private final String encodedHash;
 
 
     public StreamingService(double secureKey, CFile fileToPlay) {
         this.secureKey = secureKey;
         this.fileToPlay = fileToPlay;
-        pathToTSCache = Controller.PATH_TO_CACHE_FOLDER + "/" + fileToPlay.getName() + "/";
+        encodedHash = encodeValue("" + fileToPlay.getHash());
+        pathToTSCache = Controller.PATH_TO_CACHE_FOLDER + "/" + encodedHash + "/";
         pathToServerDirectory = fileToPlay.getRoot().getFile().getPath();
-        pathToPlaylist = pathToServerDirectory + pathToTSCache + fileToPlay.getNameStripExtension() + ".m3u8";
+        pathToPlaylist = pathToServerDirectory + pathToTSCache + encodedHash + ".m3u8";
 
         if (Files.notExists(Path.of(pathToPlaylist))) {
 
@@ -46,7 +50,7 @@ public class StreamingService implements AutoCloseable {
             ArrayList<String> linesToWrite = new ArrayList<>();
             while ((line = br.readLine()) != null) {
                 if (line.contains(".ts")) {
-                    paths.add(pathToTSCache + fileToPlay.getNameStripExtension() + counter + ".ts");
+                    paths.add(pathToTSCache + encodedHash + "" + counter + ".ts");
                     counter ++;
                     line = "http://nissa.local:3004" + paths.get(counter - 1);
                 }
@@ -67,19 +71,28 @@ public class StreamingService implements AutoCloseable {
             writer.flush();
             writer.close();
             pw.close();
-            boolean added = ServerService.getInstance().addContext(secureKey, fileToPlay.getPathFromRoot() + "/Play/", new M3U8PlaylistStreamHandler(pathToPlaylist));
-            System.out.println(fileToPlay.getPathFromRoot() + "/Play/");
+            boolean added = ServerService.getInstance().addContext(secureKey, "/" + encodedHash + "/Play/", new M3U8PlaylistStreamHandler(pathToPlaylist));
+            //System.out.println(fileToPlay.getPathFromRoot() + "/Play/");
 
             for (String path : paths) {
                 boolean add = ServerService.getInstance().addContext(secureKey, path, new TSStreamHandler(new File(pathToServerDirectory + path)));
+                System.out.println(pathToServerDirectory + path);
                 //System.out.println("Adding " + path + " added: " + add);
             }
 
-            System.out.println("Streaming path added???? " + added);
+            //System.out.println("Streaming path added???? " + added);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private String encodeValue(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException(ex.getCause());
         }
     }
 
@@ -126,7 +139,6 @@ public class StreamingService implements AutoCloseable {
             }
         }
     }
-
 
     static class M3U8PlaylistStreamHandler implements HttpHandler {
 

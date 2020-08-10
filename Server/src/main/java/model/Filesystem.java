@@ -7,27 +7,27 @@ import java.io.File;
 public abstract class Filesystem implements Comparable<Filesystem>{
     private final File file;
     private final FileType type;
-    private final double hash;
+    private final long hash;
 
     private final Filesystem root;
     protected String pathFromRoot;
 
 
-    public Filesystem(File file, FileType type, double hash){
+    public Filesystem(File file, FileType type, long hash){
         this.file = file;
         this.type = type;
         this.root = this;
         this.hash = hash(hash);
     }
 
-    public Filesystem(File file, FileType type, Filesystem root, double hash){
+    public Filesystem(File file, FileType type, Filesystem root, long hash){
         this.file = file;
         this.type = type;
         this.root = root;
         this.hash = hash(hash);
     }
 
-    public double getHash(){
+    public long getHash(){
         return hash;
     }
 
@@ -63,8 +63,9 @@ public abstract class Filesystem implements Comparable<Filesystem>{
         return this.getFile().getName().compareToIgnoreCase(f2.getFile().getName());
     }
 
-    protected double hash(double previousHash){
+    protected long hash(long previousHash){
         return this.getName().hashCode() + this.type.hashCode() + previousHash;
+        
     }
 
 }

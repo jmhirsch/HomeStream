@@ -12,7 +12,7 @@ public class CFile extends Filesystem {
     private final String nameStripExtension;
     private final String extension;
 
-    public CFile(File file, String pathFromRoot, Filesystem root, double hash) {
+    public CFile(File file, String pathFromRoot, Filesystem root, long hash) {
         super(file, FileType.FILE, root, hash);
 
         this.pathFromRoot = pathFromRoot + "/" + getName();
