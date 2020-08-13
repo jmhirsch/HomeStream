@@ -63,11 +63,18 @@ public class UI extends JFrame {
 
         JPanel bottomPanel = createToolbarPanels();
 
+
+        JPanel infoButtonPanel = new JPanel();
+        setDefaultPanelSettings(infoButtonPanel, bottomPanel);
+        infoButtonPanel.add(new JLabel("Info"));
+        ToolbarButtonBuilder infoButton = new ToolbarButtonBuilder("Info", infoButtonPanel);
+
         ArrayList<ToolbarButtonBuilder> buttonBuilderList = createToolBarButtons();
         CustomToolbar toolBar = new CustomToolbar(createToolBarButtons(), this::revalidate);
         buttonBuilderList.clear(); // clear list once objets are created
         toolBar.setLayout(new FlowLayout(FlowLayout.LEADING));
         toolBar.setFloatable(false);
+        toolBar.addInfoButton(infoButton);
 
         focusLabel = new JLabel();
 
@@ -95,6 +102,9 @@ public class UI extends JFrame {
 
         focusLabel.grabFocus();
         generalPanel.callbackAction(); // will start streaming if auto streaming is enabled
+
+        SwingUtilities.invokeLater(() -> revalidate("")); // Necessary to fix some UI bugs at startup
+
     }
 
     public void processFileChooserInput(String s) {
@@ -197,7 +207,9 @@ public class UI extends JFrame {
         pack();
         this.revalidate();
         this.repaint();
-        this.setTitle(title);
+        if (!title.equals("")) {
+            this.setTitle(title);
+        }
         return null;
     }
 
