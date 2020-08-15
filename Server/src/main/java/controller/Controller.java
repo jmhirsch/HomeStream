@@ -153,7 +153,8 @@ public class Controller {
                 int responseCode = 400;
                 if (jsonObject.getLong("hash") == file.getHash()){
                     file.setFavorite(jsonObject.getBoolean("isFavorite"));
-                    System.out.println("File " + file.getName() + " updated -- favorite:" + file.isFavorite());
+                    file.setCurrentPlaybackPosition(jsonObject.getInt("playbackPosition"));
+                    System.out.println("File " + file.getName() + " updated -- favorite:" + file.isFavorite()  + " P.P: " + jsonObject.get("playbackPosition"));
                     worked = "true";
                     responseCode = 200;
                 }

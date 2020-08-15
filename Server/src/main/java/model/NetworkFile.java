@@ -45,4 +45,8 @@ public class NetworkFile extends NetworkFilesystem {
     public int getCurrentPlaybackPosition(){
         return currentPlaybackPosition;
     }
+
+    public void setCurrentPlaybackPosition(int currentPlaybackPosition){
+        this.currentPlaybackPosition = currentPlaybackPosition;
+    }
 }
