@@ -28,7 +28,7 @@ public class StreamingService implements AutoCloseable {
     private final String encodedHash;
 
 
-    public StreamingService(double secureKey, NetworkFile fileToPlay) {
+    public StreamingService(double secureKey, NetworkFile fileToPlay, String url) {
         this.secureKey = secureKey; // key used to identify to server
         encodedHash = encodeStringForURLs(String.valueOf(fileToPlay.getHash())); //encode hash of file to play as URL
         pathToTSCache = Controller.PATH_TO_CACHE_FOLDER + "/" + encodedHash + "/"; //Define the path to store the encoded files
@@ -40,12 +40,12 @@ public class StreamingService implements AutoCloseable {
         paths = new ArrayList<>();
         File file = new File(pathToPlaylist);
 
-        reformatM3U8Playlist(file); // rewrite M3U8 Playlist to include correct server location
+        reformatM3U8Playlist(file, url); // rewrite M3U8 Playlist to include correct server location
         createContexts(secureKey); // create appropriate contexts in server
     }
 
     // Rewrite M3U8 File to contain server address in the name of the TS Files
-    private void reformatM3U8Playlist(File file) {
+    private void reformatM3U8Playlist(File file, String url) {
         try {
             FileReader reader = new FileReader(file);
             BufferedReader br = new BufferedReader(reader);
@@ -57,7 +57,7 @@ public class StreamingService implements AutoCloseable {
                 if (line.contains(".ts")) { // checks if current line refers to a Transport Stream file
                     paths.add(pathToTSCache + encodedHash + "" + counter + ".ts");  // save the path to use for contexts
                     counter ++;
-                    line = "http://nissa.local:3004" + paths.get(counter - 1); // defines the new line to write
+                    line = url + paths.get(counter - 1); // defines the new line to write
                 }
 
                 // saves the old line back, or the new line if line refered to .TS.

@@ -141,14 +141,14 @@ public class Controller {
 
         @Override
         public void handle(HttpExchange t) throws IOException {
+            InputStream is = t.getRequestBody();
+            String request = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
+            JSONTokener parser = new JSONTokener(request);
+            JSONObject jsonObject = new JSONObject(parser);
 
+            System.out.println("URLLLLLLL:  " + t.getRequestHeaders());
             System.out.println(file.getName());
-            if (t.getRequestMethod().equalsIgnoreCase("POST")) {
-                System.out.println("Here");
-                InputStream is = t.getRequestBody();
-                String request = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
-                JSONTokener parser = new JSONTokener(request);
-                JSONObject jsonObject = new JSONObject(parser);
+            if (t.getRequestMethod().equalsIgnoreCase("PATCH")) {
                 String worked = "false";
                 int responseCode = 400;
                 if (jsonObject.getLong("hash") == file.getHash()){
@@ -168,11 +168,12 @@ public class Controller {
 
                 System.out.println(response.toString());
             } else {
-
+                String addressToUse = jsonObject.getString("address");
+                System.out.println("address to use in service: " + addressToUse);
                 JSONObject response = file.getJSONFile();
                 System.out.println(response);
                 t.sendResponseHeaders(200, response.toString().getBytes().length);
-                new StreamingService(secureKey, file);
+                new StreamingService(secureKey, file, addressToUse);
                 OutputStream os = t.getResponseBody();
                 os.write(response.toString().getBytes());
                 os.close();
