@@ -6,15 +6,14 @@ import com.sun.net.httpserver.HttpHandler;
 import model.NetworkFile;
 import model.NetworkFolder;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import services.ServerService;
 import services.StreamingService;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /*
 Defines
@@ -95,6 +94,7 @@ public class Controller {
         createContexts(root);
         ServerService.getInstance().addContext(secureKey, REFRESH_HANDLER_PATH, new RefreshHandler(this::refresh));
         ServerService.getInstance().addContext(secureKey, GET_DATA_HANDLER_PATH, new FolderHandler(root));
+        ServerService.getInstance().addContext(secureKey, "/POST/", new PostHandler(this::JSONResponse));
         return null;
     }
 
@@ -106,12 +106,28 @@ public class Controller {
 
         for (NetworkFile file : folder.getFiles()) {
             ServerService.getInstance().addContext(secureKey, "/" + file.getHash(), new FileHandler(file, secureKey));
-            System.out.println("/" + file.getHash());
         }
 
         for (NetworkFolder subFolder : folder.getFolders()) {
             createContexts(subFolder);
         }
+    }
+
+    private boolean JSONResponse(JSONObject object){
+
+        System.out.println(object.get("Type"));
+
+        if (object.get("Type").equals("File")){
+            System.out.println(object.get("hash"));
+            NetworkFile file = root.findFile(object.getLong("hash"));
+            System.out.println(file == null);
+            if (file != null){
+                file.setFavorite(object.getBoolean("isFavorite"));
+            return true;
+             }
+        }
+
+        return false;
     }
 
     static class FileHandler implements HttpHandler {
@@ -125,13 +141,41 @@ public class Controller {
 
         @Override
         public void handle(HttpExchange t) throws IOException {
-            JSONObject response = file.getJSONFile();
-            System.out.println(response);
-            t.sendResponseHeaders(200, response.toString().getBytes().length);
-            new StreamingService(secureKey, file);
-            OutputStream os = t.getResponseBody();
-            os.write(response.toString().getBytes());
-            os.close();
+
+            System.out.println(file.getName());
+            if (t.getRequestMethod().equalsIgnoreCase("POST")) {
+                System.out.println("Here");
+                InputStream is = t.getRequestBody();
+                String request = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
+                JSONTokener parser = new JSONTokener(request);
+                JSONObject jsonObject = new JSONObject(parser);
+                String worked = "false";
+                int responseCode = 400;
+                if (jsonObject.getLong("hash") == file.getHash()){
+                    file.setFavorite(jsonObject.getBoolean("isFavorite"));
+                    System.out.println("File " + file.getName() + " updated -- favorite:" + file.isFavorite());
+                    worked = "true";
+                    responseCode = 200;
+                }
+
+                JSONObject response = new JSONObject();
+                response.put("message", "file " + file.getName() + "updated?:" + worked);
+                t.sendResponseHeaders(responseCode, response.toString().getBytes().length);
+                OutputStream os  = t.getResponseBody();
+                os.write(response.toString().getBytes());
+                os.close();
+
+                System.out.println(response.toString());
+            } else {
+
+                JSONObject response = file.getJSONFile();
+                System.out.println(response);
+                t.sendResponseHeaders(200, response.toString().getBytes().length);
+                new StreamingService(secureKey, file);
+                OutputStream os = t.getResponseBody();
+                os.write(response.toString().getBytes());
+                os.close();
+            }
         }
     }
 
@@ -146,6 +190,12 @@ public class Controller {
         public void handle(HttpExchange t) throws IOException {
             Headers h = t.getRequestHeaders();
             InputStream r = t.getRequestBody();
+
+            System.out.println("Protocol: " + t.getProtocol() + "Request Method: " + t.getRequestMethod());
+            System.out.println("Headers::::");
+            System.out.println(h.entrySet());
+            System.out.println("Request Body");
+            System.out.println(r.readAllBytes());
 
             URI a = t.getRequestURI();
 
@@ -193,7 +243,18 @@ public class Controller {
             OutputStream os = t.getResponseBody();
             os.write(response.toString().getBytes());
             os.close();
+        }
+    }
 
+    static class PostHandler implements HttpHandler{
+
+        private Function<JSONObject, Boolean> callback;
+
+        public PostHandler(Function<JSONObject, Boolean> callback){
+            this.callback = callback;
+        }
+
+        public void handle(HttpExchange t) throws IOException {
         }
     }
 }

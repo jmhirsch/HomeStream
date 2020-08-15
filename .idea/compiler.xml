@@ -13,4 +13,9 @@
       <module name="HomeStream-Server" target="12" />
     </bytecodeTargetLevel>
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="HomeStream-Server" options="" />
+    </option>
+  </component>
 </project>

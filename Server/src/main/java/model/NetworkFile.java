@@ -11,6 +11,7 @@ Defines a network file object used to pass to a server
 public class NetworkFile extends NetworkFilesystem {
     private final String nameWithoutExtension;
     private final String extension;
+    private int currentPlaybackPosition;
 
     public NetworkFile(File file, String pathFromRoot, NetworkFilesystem root, long hash) {
         super(file, FileType.FILE, root, hash);
@@ -19,6 +20,7 @@ public class NetworkFile extends NetworkFilesystem {
         int extensionIndex = file.getName().lastIndexOf('.');
         this.nameWithoutExtension = file.getName().substring(0, extensionIndex);
         this.extension = file.getName().substring(extensionIndex);
+        this.currentPlaybackPosition = 0;
     }
 
 
@@ -27,6 +29,8 @@ public class NetworkFile extends NetworkFilesystem {
         JSONObject jsonFile = new JSONObject();
         jsonFile.put("name", getName());
         jsonFile.put("hash", getHash());
+        jsonFile.put("isFavorite", isFavorite());
+        jsonFile.put("playbackPosition", currentPlaybackPosition);
         return jsonFile;
     }
 
@@ -36,5 +40,9 @@ public class NetworkFile extends NetworkFilesystem {
 
     public String getExtension(){
         return this.extension;
+    }
+
+    public int getCurrentPlaybackPosition(){
+        return currentPlaybackPosition;
     }
 }
