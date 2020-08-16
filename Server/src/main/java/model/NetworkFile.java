@@ -26,13 +26,11 @@ public class NetworkFile extends NetworkFilesystem {
 
     // Returns a JSONObject of the file containing its name and its hash
     public JSONObject getJSONFile(){
-        JSONObject jsonFile = new JSONObject();
-        jsonFile.put("name", getName());
-        jsonFile.put("hash", getHash());
-        jsonFile.put("isFavorite", isFavorite());
+        JSONObject jsonFile = super.getData();
         jsonFile.put("playbackPosition", currentPlaybackPosition);
         return jsonFile;
     }
+
 
     public String getNameWithoutExtension() {
         return this.nameWithoutExtension;
