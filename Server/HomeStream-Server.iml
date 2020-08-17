@@ -30,6 +30,8 @@
     <orderEntry type="library" exported="" name="VAqua7" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.jna:jna-platform:5.6.0" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.jna:jna:5.6.0" level="project" />
+    <orderEntry type="library" name="Maven: net.java.dev.jna:jna-platform:5.6.0" level="project" />
+    <orderEntry type="library" name="Maven: net.java.dev.jna:jna:5.6.0" level="project" />
     <orderEntry type="library" name="Maven: com.github.kokorin.jaffree:jaffree:0.9.6" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.7" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20200518" level="project" />

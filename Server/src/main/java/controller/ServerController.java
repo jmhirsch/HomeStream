@@ -7,6 +7,8 @@ import interfaces.NotificationListener;
 import model.Context;
 import model.NetworkFile;
 import model.NetworkFolder;
+import model.requests.NetworkRequest;
+import netscape.javascript.JSObject;
 import observer.Subject;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -16,13 +18,13 @@ import services.StreamingService;
 import java.io.*;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class ServerController extends Subject {
 
-    public static final String GET_DATA_HANDLER_PATH = "/get-data/";
-    public static final String REFRESH_HANDLER_PATH = "/Refresh/";
     private final String cacheFolderToIgnore;
 
     private ServerService serverService;
@@ -31,6 +33,8 @@ public final class ServerController extends Subject {
     private int portNum;
 
     private double secureKey;
+
+    Map<Long, String> requestQueue = new ConcurrentHashMap<>();
 
     public ServerController(String cacheFolderToIgnore, ControllerManager manager){
         this.cacheFolderToIgnore = cacheFolderToIgnore;
@@ -48,16 +52,18 @@ public final class ServerController extends Subject {
             callback.apply(created);
     }
 
+    private Void createContexts(Double secureKey) {
+        this.secureKey = secureKey;
+        return null;
+    }
+
     public void stopServerService(Function<Boolean, Void> callback) {
         serverService.exit(secureKey);
         serverService = null;
         callback.apply(false);
     }
 
-    private Void createContexts(Double secureKey, List<Context> contextsToCreate) {
-        this.secureKey = secureKey;
-        createContexts(root);
-
+    private void createContexts(List<Context> contextsToCreate) {
         for (Context context: contextsToCreate){
             switch (context.getType()){
                 case FILE_CONTEXT: break;
@@ -67,7 +73,6 @@ public final class ServerController extends Subject {
                 default: break;
             }
         }
-        return null;
     }
 
     private void createFileContext(String path){
@@ -79,21 +84,21 @@ public final class ServerController extends Subject {
     }
 
     private void createRefreshContext(String path){
-        ServerService.getInstance().addContext(secureKey, REFRESH_HANDLER_PATH, new RefreshHandler(this::refresh));
+        ServerService.getInstance().addContext(secureKey, path, new RefreshHandler(this::refresh));
     }
 
     private void createGetDataContext(String path){
-        ServerService.getInstance().addContext(secureKey, GET_DATA_HANDLER_PATH, new FolderHandler(root));
+        ServerService.getInstance().addContext(secureKey, path, new FolderHandler(path));
     }
 
     private Void refresh(Void none) {
-        removeContexts(root);
-        System.out.println("removed contexts");
-        processFileChooserInput(root.getFile().getPath());
-        ServerService.getInstance().removeContext(secureKey, GET_DATA_HANDLER_PATH);
-        ServerService.getInstance().removeContext(secureKey, REFRESH_HANDLER_PATH);
-        createContexts(secureKey);
-        System.out.println("Readded contexts");
+//        removeContexts(root);
+//        System.out.println("removed contexts");
+//        processFileChooserInput(root.getFile().getPath());
+//        ServerService.getInstance().removeContext(secureKey, GET_DATA_HANDLER_PATH);
+//        ServerService.getInstance().removeContext(secureKey, REFRESH_HANDLER_PATH);
+//        createContexts(secureKey);
+//        System.out.println("Readded contexts");
         return null;
     }
 
@@ -121,7 +126,14 @@ public final class ServerController extends Subject {
         }
     }
 
-    static class FileHandler implements HttpHandler {
+
+    private void handleRequestResponse(long requestNum, JSObject response, boolean success){
+        int responseCode = success ? 200:400;
+        NetworkRequest
+
+    }
+
+     private class FileHandler implements HttpHandler {
         private final NetworkFile file;
         private final double secureKey;
 
@@ -172,7 +184,7 @@ public final class ServerController extends Subject {
         }
     }
 
-    static class FolderHandler implements HttpHandler {
+    private class FolderHandler implements HttpHandler {
         private final NetworkFolder folder;
 
         public FolderHandler(NetworkFolder folder) {
@@ -196,7 +208,7 @@ public final class ServerController extends Subject {
             int responseCode = 0;
 
             System.out.println(a.getPath());
-            if (a.getPath().equals(GET_DATA_HANDLER_PATH) || a.getPath().equals(GET_DATA_HANDLER_PATH + "/")) {
+            if (!a.getPath().equals("GET_DATA_HANDLER_PATH") || a.getPath().equals("GET_DATA_HANDLER_PATH" + "/")) {
                 System.out.println("Valid Request");
                 response.put("message", "a message");
                 response.put("currentFolder", folder.getFile().getName());
@@ -218,9 +230,9 @@ public final class ServerController extends Subject {
 
     }
 
-    static class RefreshHandler implements HttpHandler {
+    private class RefreshHandler implements HttpHandler {
 
-        private Function<Void, Void> refreshCallback;
+        private final Function<Void, Void> refreshCallback;
 
         public RefreshHandler(Function<Void, Void> refreshCallback) {
             this.refreshCallback = refreshCallback;
