@@ -78,6 +78,21 @@ public class NetworkFolder extends NetworkFilesystem {
     }
 
 
+    public NetworkFolder findFolder(long hash){
+        NetworkFolder folder = folders.get(hash);
+        if (folder!= null){
+            return folder;
+        }else{
+            for (NetworkFolder subfolder: folders.values()){
+                folder = subfolder.findFolder(hash);
+                if (folder != null){
+                    return folder;
+                }
+            }
+        }
+        return null;
+    }
+
     public NetworkFile findFile(long hash){
         NetworkFile file = files.get(hash);
         if (file != null){
@@ -86,7 +101,6 @@ public class NetworkFolder extends NetworkFilesystem {
             for (NetworkFolder folder: folders.values()){
                 file = folder.findFile(hash);
                 if (file != null){
-                    System.out.println("Found!");
                     return file;
                 }
             }

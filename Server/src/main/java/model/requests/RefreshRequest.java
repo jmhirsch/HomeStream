@@ -8,7 +8,9 @@ public class RefreshRequest<JSONObject> extends NetworkRequest<JSONObject> {
     }
 
     @Override
-    public void completeRequest(JSONObject data) {
+    public JSONObject completeRequest(JSONObject object) {
 
+        return object;
     }
+
 }

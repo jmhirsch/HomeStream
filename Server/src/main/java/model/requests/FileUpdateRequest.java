@@ -1,8 +1,6 @@
 package model.requests;
 
 import com.sun.net.httpserver.HttpExchange;
-import model.requests.NetworkRequest;
-import org.json.JSONObject;
 
 public class FileUpdateRequest<JSONObject> extends NetworkRequest<JSONObject> {
     public FileUpdateRequest(long requestNum, HttpExchange exchange, String path) {
@@ -10,7 +8,8 @@ public class FileUpdateRequest<JSONObject> extends NetworkRequest<JSONObject> {
     }
 
     @Override
-    public void completeRequest(JSONObject data) {
-
+    public JSONObject completeRequest(JSONObject object) {
+        return null;
     }
+
 }

@@ -2,7 +2,7 @@ package model.requests;
 
 import com.sun.net.httpserver.HttpExchange;
 
-public abstract class NetworkRequest<T> extends Request<T> {
+public class NetworkRequest<JSONObject> extends Request<JSONObject> {
     private final HttpExchange exchange;
     private final String path;
     public NetworkRequest(long requestNum, HttpExchange exchange, String path) {
@@ -15,4 +15,11 @@ public abstract class NetworkRequest<T> extends Request<T> {
         return path;
     }
 
+    public HttpExchange getExchange(){
+        return exchange;
+    }
+
+    public  JSONObject completeRequest(JSONObject object){
+        return object;
+    }
 }

@@ -1,19 +1,15 @@
 package controller;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import enums.Notification;
 import interfaces.NotificationListener;
 import model.Context;
-import model.NetworkFile;
-import model.NetworkFolder;
-import model.requests.NetworkRequest;
-import netscape.javascript.JSObject;
-import observer.Subject;
+import model.requests.*;
+import observer.Observer;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import services.ServerService;
-import services.StreamingService;
 
 import java.io.*;
 import java.net.URI;
@@ -23,231 +19,193 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public final class ServerController extends Subject {
-
-    private final String cacheFolderToIgnore;
+public class ServerController implements Observer {
 
     private ServerService serverService;
     private final ControllerManager manager;
     private NotificationListener notificationListener;
-    private int portNum;
 
-    private double secureKey;
+    private final RequestNumberGenerator numGenerator = new RequestNumberGenerator();
 
-    Map<Long, String> requestQueue = new ConcurrentHashMap<>();
+    Map<Long, NetworkRequest> requestQueue = new ConcurrentHashMap<>();
 
-    public ServerController(String cacheFolderToIgnore, ControllerManager manager){
-        this.cacheFolderToIgnore = cacheFolderToIgnore;
+    public ServerController(ControllerManager manager) {
+        serverService = new ServerService();
         this.manager = manager;
     }
 
-    public void setNotificationListener(NotificationListener notificationListener){
+    public void setNotificationListener(NotificationListener notificationListener) {
         this.notificationListener = notificationListener;
     }
 
-    public void startServerService(int portNum, Function<Boolean, Void> callback) {
-            this.portNum = portNum;
-            serverService = ServerService.getInstance();
-            boolean created = serverService.startServer(this::createContexts, portNum);
-            callback.apply(created);
+    public synchronized void startServerService(int portNum, Function<Boolean, Void> callback) {
+        boolean created = serverService.startServer(portNum, this::createContexts);
+        callback.apply(created);
+
+        manager.requestData();
     }
 
-    private Void createContexts(Double secureKey) {
-        this.secureKey = secureKey;
+    private synchronized Void createContexts(Void secureKey) {
         return null;
     }
 
-    public void stopServerService(Function<Boolean, Void> callback) {
-        serverService.exit(secureKey);
+    public synchronized void stopServerService(Function<Boolean, Void> callback) {
+        serverService.exit();
         serverService = null;
         callback.apply(false);
     }
 
-    private void createContexts(List<Context> contextsToCreate) {
-        for (Context context: contextsToCreate){
-            switch (context.getType()){
-                case FILE_CONTEXT: break;
-                case FOLDER_CONTEXT: break;
-                case REFRESH_CONTEXT: break;
-                case GET_DATA_CONTEXT: break;
-                default: break;
+    public synchronized void createContexts(List<Context> contextsToCreate) {
+        for (Context context : contextsToCreate) {
+            String path = context.getPath();
+            switch (context.getType()) {
+                case REFRESH_CONTEXT -> serverService.addContext(path, new RefreshHandler(path));
+                case GET_DATA_CONTEXT -> serverService.addContext(path, new GetDataHandler(path));
+                case PATCH_FILE_FOLDER -> serverService.addContext(path, new PatchFileFolderHandler(path));
+                case STREAMING_START_CONTEXT -> serverService.addContext(path, new FileStreamingRequestHandler(path));
+                default -> System.err.println("Unknown context type or type not defined for context at path " + context.getPath() + " contextType: " + context.getType());
             }
         }
     }
 
-    private void createFileContext(String path){
-
+    public void removeContext(String path) {
+        serverService.removeContext(path);
     }
 
-    private void createFolderContext(String path){
+    public synchronized void handleRequestResponse(long requestNum, JSONObject response, boolean success) {
+        int responseCode = success ? 200 : 400;
+        NetworkRequest request = requestQueue.remove(requestNum);
 
-    }
-
-    private void createRefreshContext(String path){
-        ServerService.getInstance().addContext(secureKey, path, new RefreshHandler(this::refresh));
-    }
-
-    private void createGetDataContext(String path){
-        ServerService.getInstance().addContext(secureKey, path, new FolderHandler(path));
-    }
-
-    private Void refresh(Void none) {
-//        removeContexts(root);
-//        System.out.println("removed contexts");
-//        processFileChooserInput(root.getFile().getPath());
-//        ServerService.getInstance().removeContext(secureKey, GET_DATA_HANDLER_PATH);
-//        ServerService.getInstance().removeContext(secureKey, REFRESH_HANDLER_PATH);
-//        createContexts(secureKey);
-//        System.out.println("Readded contexts");
-        return null;
-    }
-
-    private void removeContexts(NetworkFolder folder) {
-        for (NetworkFile file : folder.getFiles()) {
-            ServerService.getInstance().removeContext(secureKey, "/" + file.getHash());
-        }
-        for (NetworkFolder subFolder : folder.getFolders()) {
-            removeContexts(subFolder);
-        }
-    }
-
-    private void createContexts(NetworkFolder folder) {
-        if (folder.getName().equals(cacheFolderToIgnore)) {
-            System.out.println("ignoring cache folder");
-            return;
+        if (request == null) {
+            System.out.println("request is null");
         }
 
-        for (NetworkFile file : folder.getFiles()) {
-            ServerService.getInstance().addContext(secureKey, "/" + file.getHash(), new FileHandler(file, secureKey));
-        }
-
-        for (NetworkFolder subFolder : folder.getFolders()) {
-            createContexts(subFolder);
-        }
+        respondToRequest(response, request.getExchange(), responseCode);
     }
 
+    public synchronized void respondToRequest(JSONObject response, HttpExchange exchange, int responseCode) {
 
-    private void handleRequestResponse(long requestNum, JSObject response, boolean success){
-        int responseCode = success ? 200:400;
-        NetworkRequest
-
-    }
-
-     private class FileHandler implements HttpHandler {
-        private final NetworkFile file;
-        private final double secureKey;
-
-        public FileHandler(NetworkFile file, double secureKey) {
-            this.file = file;
-            this.secureKey = secureKey;
-        }
-
-        @Override
-        public void handle(HttpExchange t) throws IOException {
-            InputStream is = t.getRequestBody();
-            String request = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
-            JSONTokener parser = new JSONTokener(request);
-            JSONObject jsonObject = new JSONObject(parser);
-
-            System.out.println("URLLLLLLL:  " + t.getRequestHeaders());
-            System.out.println(file.getName());
-            if (t.getRequestMethod().equalsIgnoreCase("PATCH")) {
-                String worked = "false";
-                int responseCode = 400;
-                if (jsonObject.getLong("hash") == file.getHash()){
-                    file.setFavorite(jsonObject.getBoolean("isFavorite"));
-                    file.setCurrentPlaybackPosition(jsonObject.getInt("playbackPosition"));
-                    System.out.println("File " + file.getName() + " updated -- favorite:" + file.isFavorite()  + " P.P: " + jsonObject.get("playbackPosition"));
-                    worked = "true";
-                    responseCode = 200;
-                }
-
-                JSONObject response = new JSONObject();
-                response.put("message", "file " + file.getName() + "updated?:" + worked);
-                t.sendResponseHeaders(responseCode, response.toString().getBytes().length);
-                OutputStream os  = t.getResponseBody();
-                os.write(response.toString().getBytes());
-                os.close();
-
-                System.out.println(response.toString());
-            } else {
-                String addressToUse = jsonObject.getString("address");
-                System.out.println("address to use in service: " + addressToUse);
-                JSONObject response = file.getJSONFile();
-                System.out.println(response);
-                t.sendResponseHeaders(200, response.toString().getBytes().length);
-                new StreamingService(secureKey, file, addressToUse);
-                OutputStream os = t.getResponseBody();
-                os.write(response.toString().getBytes());
-                os.close();
-            }
-        }
-    }
-
-    private class FolderHandler implements HttpHandler {
-        private final NetworkFolder folder;
-
-        public FolderHandler(NetworkFolder folder) {
-            this.folder = folder;
-        }
-
-        @Override
-        public void handle(HttpExchange t) throws IOException {
-            Headers h = t.getRequestHeaders();
-            InputStream r = t.getRequestBody();
-
-            System.out.println("Protocol: " + t.getProtocol() + "Request Method: " + t.getRequestMethod());
-            System.out.println("Headers::::");
-            System.out.println(h.entrySet());
-            System.out.println("Request Body");
-            System.out.println(r.readAllBytes());
-
-            URI a = t.getRequestURI();
-
-            JSONObject response = new JSONObject();
-            int responseCode = 0;
-
-            System.out.println(a.getPath());
-            if (!a.getPath().equals("GET_DATA_HANDLER_PATH") || a.getPath().equals("GET_DATA_HANDLER_PATH" + "/")) {
-                System.out.println("Valid Request");
-                response.put("message", "a message");
-                response.put("currentFolder", folder.getFile().getName());
-                response.put("path", folder.getPathFromRoot());
-                response.put("folders", folder.getJSONItems());
-                responseCode = 200;
-
-            } else {
-                System.out.println("Invalid Request");
-                response.put("message", "Invalid Query");
-                responseCode = 404;
-            }
-
-            t.sendResponseHeaders(responseCode, response.toString().getBytes().length);
-            OutputStream os = t.getResponseBody();
-            os.write(response.toString().getBytes());
+        System.out.println(response.toString());
+        try {
+            byte[] responseBytes = response.toString().getBytes();
+            exchange.sendResponseHeaders(responseCode, responseBytes.length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(responseBytes);
             os.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void update() {
+        System.out.println("No action defined in update() for ServerController. Use update(Object obj) with an HTTPHandler");
+    }
+
+    @Override
+    public void update(Object obj) {
+        if (obj instanceof Handler httpHandler){
+            serverService.addContext(httpHandler.getPath(), httpHandler);
+        }
+    }
+
+    private class PatchFileFolderHandler extends Handler {
+
+        public PatchFileFolderHandler(String path) {
+            super(path);
         }
 
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            InputStream is = exchange.getRequestBody();
+            String requestStr = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
+            JSONTokener parser = new JSONTokener(requestStr);
+            JSONObject requestObject = new JSONObject(parser);
+
+            if (exchange.getRequestMethod().equalsIgnoreCase("PATCH") && exchange.getRequestURI().toString().equals(getPath())) {
+                FileUpdateRequest request = new FileUpdateRequest(numGenerator.incrementAndGet(), exchange, getPath());
+                requestQueue.put(request.getRequestNum(), request);
+                notificationListener.notificationReceived(Notification.PATCH_WITH_HASH, requestObject, request.getRequestNum());
+            } else {
+                JSONObject response = new JSONObject();
+                response.put("message", "invalid request");
+                respondToRequest(response, exchange, 406); // Not Acceptable
+            }
+
+        }
+    }
+
+    private class FileStreamingRequestHandler extends Handler {
+        public FileStreamingRequestHandler(String path) {
+            super(path);
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            InputStream is = exchange.getRequestBody();
+            String requestStr = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
+            JSONTokener parser = new JSONTokener(requestStr);
+            JSONObject object = new JSONObject(parser);
+
+            if (exchange.getRequestURI().toString().equalsIgnoreCase(getPath())) {
+                StreamingRequest request = new StreamingRequest(numGenerator.incrementAndGet(), exchange, getPath());
+                requestQueue.put(request.getRequestNum(), request);
+                notificationListener.notificationReceived(Notification.FILE_STREAMING_REQUESTED, object, request.getRequestNum());
+            } else {
+                JSONObject response = new JSONObject();
+                response.put("message", "invalid request");
+                respondToRequest(response, exchange, 406); // Not Acceptable
+            }
+        }
+    }
+
+    private class GetDataHandler extends Handler {
+        public GetDataHandler(String path) {
+            super(path);
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            System.out.println("Get_Data received");
+            URI uri = exchange.getRequestURI();
+            if (uri.getPath().equals(getPath()) || uri.getPath().equals(getPath() + "/")) {
+                GetRequest request = new GetRequest(numGenerator.incrementAndGet(), exchange, getPath());
+                requestQueue.put(request.getRequestNum(), request);
+                notificationListener.notificationReceived(Notification.GET_CALLED, request, request.getRequestNum());
+            } else {
+                JSONObject response = new JSONObject();
+                response.put("message", "path " + uri.getPath() + " not found");
+                respondToRequest(response, exchange, 404);
+            }
+        }
     }
 
     private class RefreshHandler implements HttpHandler {
+        private final String path;
 
-        private final Function<Void, Void> refreshCallback;
-
-        public RefreshHandler(Function<Void, Void> refreshCallback) {
-            this.refreshCallback = refreshCallback;
+        public RefreshHandler(String path) {
+            this.path = path;
         }
 
         @Override
-        public void handle(HttpExchange t) throws IOException {
-            JSONObject response = new JSONObject();
-            response.put("message", "Refreshed!");
-            System.out.println(response.toString());
-            refreshCallback.apply(null);
-            t.sendResponseHeaders(200, response.toString().getBytes().length);
-            OutputStream os = t.getResponseBody();
-            os.write(response.toString().getBytes());
-            os.close();
+        public void handle(HttpExchange exchange) throws IOException {
+            System.out.println("refresh received");
+            RefreshRequest refreshRequest = new RefreshRequest(numGenerator.incrementAndGet(), exchange, path);
+            requestQueue.put(refreshRequest.getRequestNum(), refreshRequest);
+            notificationListener.notificationReceived(Notification.REFRESH_CALLED, refreshRequest, refreshRequest.getRequestNum());
+        }
+    }
+
+    static class RequestNumberGenerator {
+        private long requestNum;
+
+        public synchronized long incrementAndGet() {
+            if (requestNum >= Long.MAX_VALUE) {
+                requestNum = Long.MIN_VALUE;
+            }
+            return ++requestNum;
         }
     }
 }
+
+

@@ -4,11 +4,13 @@ import enums.ContextType;
 import enums.FileType;
 import enums.Notification;
 import model.Context;
+import model.NetworkFile;
 import model.NetworkFolder;
+import org.json.JSONObject;
+import services.StreamingService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 /*
@@ -24,10 +26,11 @@ public class Controller extends ControllerManager {
     public static final String DEFAULT_USERNAME = "admin";
     public static final String DEFAULT_PW = "admin";
 
-
-
-    public static final String GET_DATA_HANDLER_PATH = "/get-data/";
-    public static final String REFRESH_HANDLER_PATH = "/Refresh/";
+    private static final String PLAY_FILE_PATH = "/Play/";
+    private static final String PATCH_FILE_FOLDER_PATH = "/Patch-file-folder/";
+    private static final String GET_DATA_HANDLER_PATH = "/get-data/";
+    private static final String REFRESH_HANDLER_PATH = "/Refresh/";
+    private static final String STREAM_PATH = "/start_stream/";
 
     private final DataController dataController;
     private final ServerController serverController;
@@ -35,6 +38,8 @@ public class Controller extends ControllerManager {
     private static final String[] extensionlist = {".mp4", ".m4a", ".m4v", ".f4v", ".fa4", ".m4b", ".m4r", ".f4b", ".mov", ".3gp",
             ".3gp2", ".3g2", ".3gpp", ".3gpp2", ".ogg", ".oga", ".ogv", ".ogx", ".wmv", ".wma",
             ".webm", ".flv", ".avi", ".mpg", ".mkv", ".ts", ".srt"};
+
+    private static final String [] foldersToIngore = {CACHE_FOLDER_IGNORE_STR};
 
 
     private String currentPath;
@@ -45,15 +50,18 @@ public class Controller extends ControllerManager {
     public Controller() {
         currentPath = "";
         dataController = new DataController(this);
-        serverController = new ServerController(CACHE_FOLDER_IGNORE_STR, this);
+        serverController = new ServerController(this);
         serverController.setNotificationListener(this);
-        serverController.addObserver(dataController);
     }
 
 
     public void processFileChooserInput(String path) {
         currentPath = path;
-        dataController.createData(path, extensionlist, new String [] {CACHE_FOLDER_IGNORE_STR});
+        requestDataCreation();
+    }
+
+    private void requestDataCreation(){
+        dataController.createData(currentPath, extensionlist, foldersToIngore);
     }
 
     public void startServerService(int portNum, Function<Boolean, Void> callback) {
@@ -62,71 +70,104 @@ public class Controller extends ControllerManager {
         }
     }
 
-    public void createContextList(){
-        Map<FileType, List<String>> contextMap = dataController.getFilesAndFolderHashes();
+    public List<Context> createContextList(){
         List<Context> contextList = new ArrayList<>();
 
-        createSpecifiedContextFromList(contextMap.get(FileType.FILE), contextList, ContextType.FILE_CONTEXT);
-        createSpecifiedContextFromList(contextMap.get(FileType.FOLDER), contextList, ContextType.FOLDER_CONTEXT);
         contextList.add(new Context(REFRESH_HANDLER_PATH, ContextType.REFRESH_CONTEXT));
         contextList.add(new Context(GET_DATA_HANDLER_PATH, ContextType.GET_DATA_CONTEXT));
-
+        contextList.add(new Context(PATCH_FILE_FOLDER_PATH, ContextType.PATCH_FILE_FOLDER));
+        contextList.add(new Context(STREAM_PATH, ContextType.STREAMING_START_CONTEXT));
+        return contextList;
     }
-
-    private void createSpecifiedContextFromList(List<String> originList, List<Context> contextList, ContextType type){
-        for (String hash: originList){
-            contextList.add(new Context("/" + hash + "/", type));
-        }
-    }
-
-//    private Void refresh(Void none) {
-//        removeContexts(root);
-//        System.out.println("removed contexts");
-//        processFileChooserInput(root.getFile().getPath());
-//        ServerService.getInstance().removeContext(secureKey, GET_DATA_HANDLER_PATH);
-//        ServerService.getInstance().removeContext(secureKey, REFRESH_HANDLER_PATH);
-//        createContexts(secureKey);
-//        System.out.println("Readded contexts");
-//        return null;
-//    }
 
     public void stopServerService(Function<Boolean, Void> callback) {
         serverController.stopServerService(callback);
     }
 
     @Override
-    public void NotificationReceived(Notification notification, Object obj) {
+    public void notificationReceived(Notification notification, Object obj, long id) {
+        switch (notification){
+            case REFRESH_CALLED -> handleRefresh(id);
+            case PATCH_WITH_HASH -> handlePatchWithHash(obj, id);
+            case FILE_STREAMING_REQUESTED -> handleFileStreamingRequested(obj, id);
+            case GET_CALLED -> handleGetData(id);
+        }
+    }
+
+    public void handleFileStreamingRequested(Object obj, long id){
+        boolean requestProcessed = false;
+        JSONObject response = new JSONObject();
+
+        if (obj instanceof JSONObject requestObject){
+            String address = requestObject.getString("address");
+            long hash = requestObject.getLong("hash");
+            NetworkFile file = dataController.getFile(hash);
+            if (file != null) {
+                StreamingService ss = new StreamingService(file, address);
+                ss.addObserver(serverController);
+                ss.createContexts();
+                response = file.getJSONFile();
+                requestProcessed = true;
+            }else{
+                response.put("message", "File with hash " + hash + "not found. Streaming not started");
+            }
+        }else{
+            response.put("message", "Invalid data format. Streaming not started");
+        }
+        serverController.handleRequestResponse(id, response, requestProcessed);
+    }
+
+    public void handlePatchWithHash(Object obj, long id){
+        boolean updated = false;
+        JSONObject response = new JSONObject();
+        if (obj instanceof JSONObject requestObject){
+
+            String type = requestObject.getString("type");
+            long hash = requestObject.getLong("hash");
+            boolean isFavorite = requestObject.getBoolean("isFavorite");
+
+            if (type.equalsIgnoreCase(FileType.FILE.toString())){
+                updated = dataController.updateFileAtHash(hash, isFavorite, requestObject.getInt("playbackPosition"));
+            }else if (type.equalsIgnoreCase(FileType.FOLDER.toString())){
+                updated = dataController.updateFolderAtHash(hash, isFavorite);
+            }
+            if (updated){
+                response.put("message", "object at " + hash + " updated");
+            }else{
+                response.put("message", "object with " + hash + "not found");
+            }
+        }else{
+            response.put("message", "invalid data update patch request");
+        }
+        serverController.handleRequestResponse(id, response, updated);
+    }
+
+    public void handleGetData(long id){
+        JSONObject response = new JSONObject();
+        response.put("message", "Returned Data from Network");
+        response.put("folders", dataController.getJSONData());
+        serverController.handleRequestResponse(id, response,true);
+    }
+
+    public void handleRefresh(long id){
+        for (Context context: createContextList()){
+            System.out.println("Removing context at path: " + context.getPath());
+            serverController.removeContext(context.getPath());
+        }
+
+        requestDataCreation();
+
+        serverController.createContexts(createContextList());
+        JSONObject response = new JSONObject();
+        response.put("message", "Refresh Complete!");
+        System.out.println(response.toString());
+        serverController.handleRequestResponse(id, response, true);
 
     }
 
-//    private void removeContexts(NetworkFolder folder) {
-//        for (NetworkFile file : folder.getFiles()) {
-//            ServerService.getInstance().removeContext(secureKey, "/" + file.getHash());
-//        }
-//        for (NetworkFolder subFolder : folder.getFolders()) {
-//            removeContexts(subFolder);
-//        }
-//    }
+    @Override
+    public void requestData() {
+        serverController.createContexts(createContextList());
+    }
 
-
-
-
-
-
-//    private boolean JSONResponse(JSONObject object){
-//
-//        System.out.println(object.get("Type"));
-//
-//        if (object.get("Type").equals("File")){
-//            System.out.println(object.get("hash"));
-//            NetworkFile file = root.findFile(object.getLong("hash"));
-//            System.out.println(file == null);
-//            if (file != null){
-//                file.setFavorite(object.getBoolean("isFavorite"));
-//            return true;
-//             }
-//        }
-//
-//        return false;
-//    }
 }

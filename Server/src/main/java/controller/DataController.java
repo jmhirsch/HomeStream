@@ -4,8 +4,8 @@ import enums.FileType;
 import interfaces.NotificationListener;
 import model.NetworkFile;
 import model.NetworkFolder;
-import observer.Observer;
 import observer.Subject;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class DataController extends Subject implements Observer {
+public final class DataController extends Subject {
 
 
     private final NotificationListener notificationListener;
@@ -23,18 +23,8 @@ public final class DataController extends Subject implements Observer {
         this.notificationListener = notificationListener;
     }
 
-    @Override
-    public void update() {
-
-    }
-
-    @Override
-    public void setSubject(Subject subject) {
-
-    }
-
-    public void createData(String path, String[] extensionlist, String [] foldersToIgnore) {
-        root = new NetworkFolder(new File(path), extensionlist, foldersToIgnore);
+    public void createData(String path, String[] extensionList, String [] foldersToIgnore) {
+        root = new NetworkFolder(new File(path), extensionList, foldersToIgnore);
         System.out.println("root path: " + root.getFile().getPath());
     }
 
@@ -44,11 +34,15 @@ public final class DataController extends Subject implements Observer {
         ArrayList<String> folderHashList = new ArrayList<>();
         map.put(FileType.FILE, fileHashList);
         map.put(FileType.FOLDER, folderHashList);
+        getFolderHashes(map, root);
         return map;
     }
 
-    private void getFolderHashes(Map<FileType, List<String>> map, NetworkFolder folder){
+    public JSONObject getJSONData(){
+        return root.getJSONItems();
+    }
 
+    private void getFolderHashes(Map<FileType, List<String>> map, NetworkFolder folder){
         getFileHashes(map.get(FileType.FILE), folder);
 
         for (NetworkFolder subfolder: folder.getFolders()){
@@ -61,6 +55,41 @@ public final class DataController extends Subject implements Observer {
         for (NetworkFile file: folder.getFiles()){
             fileHashlist.add(String.valueOf(file.getHash()));
         }
+    }
+
+    public boolean updateFileAtHash(long hash, boolean isFavorite, int playbackPosition){
+        NetworkFile file = root.findFile(hash);
+        if (file == null){
+            return false;
+        }
+        file.setFavorite(isFavorite);
+        file.setCurrentPlaybackPosition(playbackPosition);
+        return true;
+    }
+
+    public boolean updateFolderAtHash(long hash, boolean isFavorite){
+        NetworkFolder folder = root.findFolder(hash);
+        if (folder == null){
+            return false;
+        }
+        folder.setFavorite(isFavorite);
+        return true;
+    }
+
+    public NetworkFile getFile(long hash){
+        NetworkFile file;
+        if ((file = root.findFile(hash))!= null){
+            return file;
+        }
+        return null;
+    }
+
+    public NetworkFolder getFolder(long hash){
+        NetworkFolder folder;
+        if ((folder = root.findFolder(hash))!= null){
+            return folder;
+        }
+        return null;
     }
 
 //    private void buildHashmap(){

@@ -15,6 +15,12 @@ public abstract class Subject {
         }
     }
 
+    public void notifyObservers(Object obj){
+        for (Observer observer: observersList){
+            observer.update(obj);
+        }
+    }
+
     //MODIFIES: this
     // EFFECTS: adds observer to observer list
     public void addObserver(Observer observer) {

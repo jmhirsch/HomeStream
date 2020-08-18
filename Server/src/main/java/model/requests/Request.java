@@ -11,5 +11,5 @@ public abstract class Request<T> {
         return requestNum;
     }
 
-    public abstract void completeRequest(T data);
+    public abstract T completeRequest(T data);
 }
