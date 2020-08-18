@@ -78,6 +78,21 @@ public class NetworkFolder extends NetworkFilesystem {
     }
 
 
+    public NetworkFolder findFolder(long hash){
+        NetworkFolder folder = folders.get(hash);
+        if (folder!= null){
+            return folder;
+        }else{
+            for (NetworkFolder subfolder: folders.values()){
+                folder = subfolder.findFolder(hash);
+                if (folder != null){
+                    return folder;
+                }
+            }
+        }
+        return null;
+    }
+
     public NetworkFile findFile(long hash){
         NetworkFile file = files.get(hash);
         if (file != null){
@@ -86,7 +101,6 @@ public class NetworkFolder extends NetworkFilesystem {
             for (NetworkFolder folder: folders.values()){
                 file = folder.findFile(hash);
                 if (file != null){
-                    System.out.println("Found!");
                     return file;
                 }
             }
@@ -192,11 +206,8 @@ public class NetworkFolder extends NetworkFilesystem {
             - subfolders: array of JSONObjects recursively containing subfolders of current folder
      */
     public JSONObject getJSONItems(){
-        JSONObject items = new JSONObject();
-        items.put("name", getName());
-        items.put("hash", getHash());
+        JSONObject items = super.getData();
         items.put("path", getPathFromRoot());
-        items.put("isFavorite", isFavorite());
         items.put("files", getJSONFiles());
         JSONArray subfolders = new JSONArray();
 
@@ -218,11 +229,6 @@ public class NetworkFolder extends NetworkFilesystem {
     }
 
     // returns all the subfolder objects (unmodifiable)
-//    public Collections<NetworkFolder> getFolders() {
-//        return Collections.unmodifiableCollection(folders.values());
-//    }
-
-
     public Collection<NetworkFolder> getFolders(){
         return Collections.unmodifiableCollection(folders.values());
     }
@@ -231,21 +237,6 @@ public class NetworkFolder extends NetworkFilesystem {
     public Collection<NetworkFile> getFiles(){
         return Collections.unmodifiableCollection(files.values());
     }
-
-//    //prints all files in current folder
-//    public void listAllFiles(){
-//        for (NetworkFile file: files){
-//            file.printName();
-//        }
-//    }
-
-    //Prints all folders to console recursively
-//    public void listAllFolders(){
-//        super.printName();
-//        for (NetworkFolder folder: folders){
-//            folder.listAllFolders();
-//        }
-//    }
 
     // Compares folder name to array of folder names to ignore
     // Returns false if no list was passed

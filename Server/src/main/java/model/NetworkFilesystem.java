@@ -2,6 +2,7 @@ package model;
 
 import controller.Main;
 import enums.FileType;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,14 @@ public abstract class NetworkFilesystem implements Comparable<NetworkFilesystem>
         this.type = type;
         this.root = root;
         this.hash = hash(hash);
+    }
+
+    public JSONObject getData(){
+        JSONObject object = new JSONObject();
+        object.put("hash", this.hash);
+        object.put("name", this.getName());
+        object.put("isFavorite", this.isFavorite);
+        return object;
     }
 
     public long getHash(){

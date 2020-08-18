@@ -1,5 +1,7 @@
 package view;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,16 +35,22 @@ public class CustomToolbar extends JToolBar {
 
         // build buttons and add to the internal list
         for (ToolbarButtonBuilder buttonBuilder: buttonBuilderList){
-            ToolbarButton button = createButtonForToolBar(buttonBuilder.getTitle(), buttonBuilder.getImageName(), buttonBuilder.getComponentToDisplay());
+            ToolbarButton button = createToolbarButtonObject(buttonBuilder);
             add(button);
             buttonList.add(button);
         }
         setSelectedButton(buttonList.get(0));
     }
 
+    @NotNull
+    private ToolbarButton createToolbarButtonObject(ToolbarButtonBuilder buttonBuilder) {
+        ToolbarButton button = createButtonForToolBar(buttonBuilder.title(), buttonBuilder.imageName(), buttonBuilder.componentToDisplay());
+        return button;
+    }
+
     public void addInfoButton(ToolbarButtonBuilder infoButton){
         addSeparator(new Dimension(150,50));
-        ToolbarButton info = createButtonForToolBar(infoButton.getTitle(), infoButton.getImageName(), infoButton.getComponentToDisplay());
+        ToolbarButton info = createToolbarButtonObject(infoButton);
         add(info);
         buttonList.add(info);
     }
