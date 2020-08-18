@@ -10,48 +10,45 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.util.Objects;
+import java.util.Random;
 import java.util.function.Function;
 
 /*
 Defines an HTTP Server singleton with portnum
-When starting the server,
+When starting the server, a unique secureKey is created. This is used for authentication purposes
+Only classes with the secureKey can add or remove contexts to the server. This prevent unauthorized modification of the server.
+All classes which wish to modify the server must be passed the secureKey
+SecureKey is then used to create a hash and compare the private hashcode with the hashcode generated using the secure key during
+authentication
  */
 public class ServerService {
+    private static ServerService instance = null;
 
     private InetSocketAddress address;
     private HttpServer server;
-    private int portNum;
+    private Double secureKey;
+    private ServerService(){}
 
-    public ServerService(int portNum){
-        this.portNum = portNum;
-    }
-
-    public ServerService(){}
-
-
-    public int getPortNum() {
-        return portNum;
-    }
-
-    public boolean startServer(int portNum, Function<Void, Void> contextCreator){
-        this.portNum = portNum;
-        return startServer(contextCreator);
+    public static ServerService getInstance(){
+        if (instance == null){
+            instance = new ServerService();
+        }
+        return instance;
     }
 
     //Stars server using specified port num, returns true if server is created, false otherwise
     //Caller receives a callback function to create contexts, with the secureKey as a parameter.
     // It is expected that the caller will save the secureKey for future use. Contexts can be created
     // later using the secureKey
-    public boolean startServer(Function <Void, Void> contextCreator){
-        if (portNum == -1){
-            return false;
-        }
+    public boolean startServer(Function <Double, Void> contextCreator, int portNum){
+
+        address = new InetSocketAddress(portNum);
         try {
-            address = new InetSocketAddress(portNum);
             server = HttpServer.create(address, 0);
             server.setExecutor(null);
             server.start();
-            contextCreator.apply(null);
+            secureKey = new Random().nextDouble() * server.hashCode() * address.hashCode();
+            contextCreator.apply(secureKey);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
@@ -61,28 +58,36 @@ public class ServerService {
     }
 
     //Stops the server. Requires secureKey. Returns true IFF secureKey matches
-    public void exit() {
+    public boolean exit(double secureKey) {
+        if (authenticate(secureKey)) {
             try {
                 server.stop(0);
+            } finally {
                 System.out.println("Server Closed");
-            } catch(Exception e) {
-                System.err.println("Server exited with error : " + e.getLocalizedMessage());
             }
+            return true;
+        }
+        return false;
     }
 
     //Adds specified context. Requires secure key. Returns true IFF secureKey matches
-    public void addContext(String path, HttpHandler handler){
+    public boolean addContext(double secureKey, String path, HttpHandler handler){
+        if (authenticate(secureKey)){
             server.createContext(path, handler);
+            return true;
+        }
+        System.out.println("Access denied");
+        return false;
     }
 
 
-    //Removes context at specified path. Returns true IFF secureKey matches
-    public void removeContext(String path){
-            try {
-                server.removeContext(path);
-            } catch(Exception e){
-                //System.err.println("Error in server for path: " + path + " " +e.getMessage());
-            }
+    //Removes context at specified path. Returns true IFF secureKey mathces
+    public boolean removeContext(double secureKey, String path){
+        if (authenticate(secureKey)){
+            server.removeContext(path);
+            return true;
+        }
+        return false;
     }
 
     //Private method used to authenticate caller using secureKey. Returns true IFF secureKey matches,
@@ -91,8 +96,23 @@ public class ServerService {
         return Objects.hash(address, server, secureKey) == this.hashCode();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ServerService that = (ServerService) o;
+        return  Double.compare(that.secureKey, secureKey) == 0 &&
+                address.equals(that.address) &&
+                server.equals(that.server);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address, server, secureKey);
+    }
+
     //Returns localIP of server
-    public static String getLocalIP() throws CouldNotFindIPException {
+    public String getLocalIP() throws CouldNotFindIPException {
         String ip = null;
 
         if (Main.systemIsMacOS()) {
@@ -120,7 +140,7 @@ public class ServerService {
     }
 
     //Returns remoteIP of server
-    public static String getRemoteIP() throws CouldNotFindIPException{
+    public String getRemoteIP() throws CouldNotFindIPException{
         String ip = "";
         URL whatismyip = null;
         try {

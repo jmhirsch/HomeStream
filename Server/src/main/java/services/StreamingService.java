@@ -2,24 +2,25 @@ package services;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 import controller.Controller;
 import model.NetworkFile;
-import model.requests.Handler;
-import observer.Subject;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Random;
 
 /*
 Defines a Service objects which makes a file available for streaming using a M3U8 Playlist (Apple HLS)
 Designed to work with Server service. SecureKey is used to authenticate itself with server Requires M3U8 Encoder Service.
  */
-public class StreamingService extends Subject {
+public class StreamingService implements AutoCloseable {
+
+    private double secureKey;
     private final String pathToServerDirectory;
     private final String pathToTSCache;
     private final ArrayList<String> paths;
@@ -27,31 +28,24 @@ public class StreamingService extends Subject {
     private final String encodedHash;
 
 
-    public StreamingService(NetworkFile fileToPlay, String url) {
+    public StreamingService(double secureKey, NetworkFile fileToPlay) {
+        this.secureKey = secureKey; // key used to identify to server
         encodedHash = encodeStringForURLs(String.valueOf(fileToPlay.getHash())); //encode hash of file to play as URL
         pathToTSCache = Controller.PATH_TO_CACHE_FOLDER + "/" + encodedHash + "/"; //Define the path to store the encoded files
         pathToServerDirectory = fileToPlay.getRoot().getFile().getPath(); // get path to root of folder
         pathToPlaylist = pathToServerDirectory + pathToTSCache + encodedHash + ".m3u8"; // define path of the playlist
-
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-
-                return null;
-            }
-        };
-        worker.execute();
 
         encodeFileIfNotExists(fileToPlay); // encode file if it doesn't already exist
 
         paths = new ArrayList<>();
         File file = new File(pathToPlaylist);
 
-        reformatM3U8Playlist(file, url); // rewrite M3U8 Playlist to include correct server location
+        reformatM3U8Playlist(file); // rewrite M3U8 Playlist to include correct server location
+        createContexts(secureKey); // create appropriate contexts in server
     }
 
     // Rewrite M3U8 File to contain server address in the name of the TS Files
-    private void reformatM3U8Playlist(File file, String url) {
+    private void reformatM3U8Playlist(File file) {
         try {
             FileReader reader = new FileReader(file);
             BufferedReader br = new BufferedReader(reader);
@@ -63,7 +57,7 @@ public class StreamingService extends Subject {
                 if (line.contains(".ts")) { // checks if current line refers to a Transport Stream file
                     paths.add(pathToTSCache + encodedHash + "" + counter + ".ts");  // save the path to use for contexts
                     counter ++;
-                    line = url + paths.get(counter - 1); // defines the new line to write
+                    line = "http://nissa.local:3004" + paths.get(counter - 1); // defines the new line to write
                 }
 
                 // saves the old line back, or the new line if line refered to .TS.
@@ -97,10 +91,10 @@ public class StreamingService extends Subject {
     }
 
     //Create contexts for .TS files and M3U8 playlist
-    public void createContexts() {
-        notifyObservers(new M3U8PlaylistStreamHandler("/" + encodedHash + "/Play/", pathToPlaylist));
+    private void createContexts(double secureKey) {
+        ServerService.getInstance().addContext(secureKey, "/" + encodedHash + "/Play/", new M3U8PlaylistStreamHandler(pathToPlaylist));
         for (String path : paths) {
-            notifyObservers(new TSStreamHandler(path, new File(pathToServerDirectory + path)));
+            ServerService.getInstance().addContext(secureKey, path, new TSStreamHandler(new File(pathToServerDirectory + path)));
         }
     }
 
@@ -113,14 +107,23 @@ public class StreamingService extends Subject {
         }
     }
 
+
+    //Method to call when object is closed (currently does not work afaik)
+    @Override
+    public void close() {
+        ServerService.getInstance().removeContext(secureKey, pathToTSCache);
+        secureKey = new Random().nextDouble();
+        System.out.println("Close has been called1");
+    }
+
+
     // Stream handler for individual Transport Files
     // Will write the file to the client when request is received
     //Header: Content-Type, video/mp2t
-    static class TSStreamHandler extends Handler {
+    static class TSStreamHandler implements HttpHandler {
         private final File file;
 
-        public TSStreamHandler(String path, File file) {
-            super(path);
+        public TSStreamHandler(File file) {
             this.file = file;
         }
 
@@ -147,10 +150,9 @@ public class StreamingService extends Subject {
     //Stream handler for M3U8 Playlsit
     // Will write file to client when request is received
     //Header: Content-Type, application/x-mpegURL
-    static class M3U8PlaylistStreamHandler extends Handler {
+    static class M3U8PlaylistStreamHandler implements HttpHandler {
         private final String pathToPlaylist;
-        public M3U8PlaylistStreamHandler(String path, String pathToPlaylist) {
-            super(path);
+        public M3U8PlaylistStreamHandler(String pathToPlaylist) {
             this.pathToPlaylist = pathToPlaylist;
         }
 
