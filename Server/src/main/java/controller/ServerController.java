@@ -1,19 +1,18 @@
 package controller;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import enums.Notification;
+import enums.ServerMethodType;
 import interfaces.NotificationListener;
 import model.Context;
-import model.requests.*;
+import model.requests.Handler;
+import model.requests.NetworkRequest;
+import model.requests.Notification;
 import observer.Observer;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import services.ServerService;
 
 import java.io.*;
-import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -27,7 +26,7 @@ public class ServerController implements Observer {
 
     private final RequestNumberGenerator numGenerator = new RequestNumberGenerator();
 
-    Map<Long, NetworkRequest> requestQueue = new ConcurrentHashMap<>();
+    Map<Long, NetworkRequest<JSONObject>> requestQueue = new ConcurrentHashMap<>();
 
     public ServerController(ControllerManager manager) {
         serverService = new ServerService();
@@ -41,7 +40,6 @@ public class ServerController implements Observer {
     public synchronized void startServerService(int portNum, Function<Boolean, Void> callback) {
         boolean created = serverService.startServer(portNum, this::createContexts);
         callback.apply(created);
-
         manager.requestData();
     }
 
@@ -55,16 +53,9 @@ public class ServerController implements Observer {
         callback.apply(false);
     }
 
-    public synchronized void createContexts(List<Context> contextsToCreate) {
-        for (Context context : contextsToCreate) {
-            String path = context.getPath();
-            switch (context.getType()) {
-                case REFRESH_CONTEXT -> serverService.addContext(path, new RefreshHandler(path));
-                case GET_DATA_CONTEXT -> serverService.addContext(path, new GetDataHandler(path));
-                case PATCH_FILE_FOLDER -> serverService.addContext(path, new PatchFileFolderHandler(path));
-                case STREAMING_START_CONTEXT -> serverService.addContext(path, new FileStreamingRequestHandler(path));
-                default -> System.err.println("Unknown context type or type not defined for context at path " + context.getPath() + " contextType: " + context.getType());
-            }
+    public synchronized void createContexts(Context ... contextsToCreate) {
+            for (Context context : contextsToCreate) {
+            serverService.addContext(context.path(), new ServerHandler(context.path(), context.type(), context.notification()));
         }
     }
 
@@ -72,15 +63,13 @@ public class ServerController implements Observer {
         serverService.removeContext(path);
     }
 
-    public synchronized void handleRequestResponse(long requestNum, JSONObject response, boolean success) {
-        int responseCode = success ? 200 : 400;
-        NetworkRequest request = requestQueue.remove(requestNum);
-
+    public synchronized void handleRequestResponse(long requestNum, JSONObject response, int responseCode) {
+        NetworkRequest<JSONObject> request = requestQueue.remove(requestNum);
         if (request == null) {
             System.out.println("request is null");
+        }else {
+            respondToRequest(response, request.getExchange(), responseCode);
         }
-
-        respondToRequest(response, request.getExchange(), responseCode);
     }
 
     public synchronized void respondToRequest(JSONObject response, HttpExchange exchange, int responseCode) {
@@ -109,90 +98,48 @@ public class ServerController implements Observer {
         }
     }
 
-    private class PatchFileFolderHandler extends Handler {
-
-        public PatchFileFolderHandler(String path) {
+    private class ServerHandler extends Handler{
+        private final ServerMethodType type;
+        private final Notification notification;
+        public ServerHandler(String path, ServerMethodType type, Notification notification){
             super(path);
+            this.type = type;
+            this.notification = notification;
+
         }
 
         @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            InputStream is = exchange.getRequestBody();
-            String requestStr = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
-            JSONTokener parser = new JSONTokener(requestStr);
-            JSONObject requestObject = new JSONObject(parser);
-
-            if (exchange.getRequestMethod().equalsIgnoreCase("PATCH") && exchange.getRequestURI().toString().equals(getPath())) {
-                FileUpdateRequest request = new FileUpdateRequest(numGenerator.incrementAndGet(), exchange, getPath());
-                requestQueue.put(request.getRequestNum(), request);
-                notificationListener.notificationReceived(Notification.PATCH_WITH_HASH, requestObject, request.getRequestNum());
-            } else {
+        public void handle(HttpExchange exchange) {
+            try {
                 JSONObject response = new JSONObject();
-                response.put("message", "invalid request");
-                respondToRequest(response, exchange, 406); // Not Acceptable
+                if (!exchange.getRequestURI().toString().equalsIgnoreCase(getPath())) {
+                    response.put("message", "invalid path " + getPath());
+                    respondToRequest(response, exchange, 404); // Invalid URL
+                    return;
+                } else if (!exchange.getRequestMethod().equalsIgnoreCase(type.toString())) {
+                    response.put("message", "invalid request type " + exchange.getRequestMethod() + " at path " + getPath());
+                    respondToRequest(response, exchange, 406); // Not Acceptable
+                    return;
+                }
+                JSONObject requestBody;
+                InputStream is = exchange.getRequestBody();
+                String requestStr = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
+                if (requestStr.trim().equalsIgnoreCase("") || requestStr.isBlank() || requestStr.isEmpty()) {
+                    requestBody = new JSONObject();
+
+                }else{
+                    JSONTokener parser = new JSONTokener(requestStr);
+                    requestBody = new JSONObject(parser);
+                }
+
+                if (exchange.getRequestURI().toString().equalsIgnoreCase(getPath())) {
+                    NetworkRequest<JSONObject> request = new NetworkRequest<>(numGenerator.incrementAndGet(), exchange, getPath());
+                    requestQueue.put(request.getRequestNum(), request);
+                    notificationListener.notificationReceived(notification, requestBody, request.getRequestNum());
+                }
+            }catch(Exception e){
+                System.err.println(e.getLocalizedMessage());
             }
-
-        }
-    }
-
-    private class FileStreamingRequestHandler extends Handler {
-        public FileStreamingRequestHandler(String path) {
-            super(path);
-        }
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            InputStream is = exchange.getRequestBody();
-            String requestStr = new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
-            JSONTokener parser = new JSONTokener(requestStr);
-            JSONObject object = new JSONObject(parser);
-
-            if (exchange.getRequestURI().toString().equalsIgnoreCase(getPath())) {
-                StreamingRequest request = new StreamingRequest(numGenerator.incrementAndGet(), exchange, getPath());
-                requestQueue.put(request.getRequestNum(), request);
-                notificationListener.notificationReceived(Notification.FILE_STREAMING_REQUESTED, object, request.getRequestNum());
-            } else {
-                JSONObject response = new JSONObject();
-                response.put("message", "invalid request");
-                respondToRequest(response, exchange, 406); // Not Acceptable
-            }
-        }
-    }
-
-    private class GetDataHandler extends Handler {
-        public GetDataHandler(String path) {
-            super(path);
-        }
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            System.out.println("Get_Data received");
-            URI uri = exchange.getRequestURI();
-            if (uri.getPath().equals(getPath()) || uri.getPath().equals(getPath() + "/")) {
-                GetRequest request = new GetRequest(numGenerator.incrementAndGet(), exchange, getPath());
-                requestQueue.put(request.getRequestNum(), request);
-                notificationListener.notificationReceived(Notification.GET_CALLED, request, request.getRequestNum());
-            } else {
-                JSONObject response = new JSONObject();
-                response.put("message", "path " + uri.getPath() + " not found");
-                respondToRequest(response, exchange, 404);
-            }
-        }
-    }
-
-    private class RefreshHandler implements HttpHandler {
-        private final String path;
-
-        public RefreshHandler(String path) {
-            this.path = path;
-        }
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            System.out.println("refresh received");
-            RefreshRequest refreshRequest = new RefreshRequest(numGenerator.incrementAndGet(), exchange, path);
-            requestQueue.put(refreshRequest.getRequestNum(), refreshRequest);
-            notificationListener.notificationReceived(Notification.REFRESH_CALLED, refreshRequest, refreshRequest.getRequestNum());
         }
     }
 
