@@ -223,7 +223,7 @@ public class NetworkFolder extends NetworkFilesystem {
     public JSONArray getJSONFiles(){
         JSONArray items = new JSONArray();
         for (Map.Entry<Long, NetworkFile> entry: files.entrySet()){
-            items.put(entry.getValue().getJSONFile());
+            items.put(entry.getValue().getData());
         }
         return items;
     }

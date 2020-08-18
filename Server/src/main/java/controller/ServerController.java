@@ -3,7 +3,7 @@ package controller;
 import com.sun.net.httpserver.HttpExchange;
 import enums.ServerMethodType;
 import interfaces.NotificationListener;
-import model.Context;
+import model.requests.Context;
 import model.requests.Handler;
 import model.requests.NetworkRequest;
 import model.requests.Notification;

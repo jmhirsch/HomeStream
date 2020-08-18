@@ -2,7 +2,7 @@ package controller;
 
 import enums.FileType;
 import enums.ServerMethodType;
-import model.Context;
+import model.requests.Context;
 import model.NetworkFile;
 import model.requests.Notification;
 import org.json.JSONObject;
@@ -105,7 +105,7 @@ public class Controller extends ControllerManager {
                 StreamingService ss = new StreamingService(file, address);
                 ss.addObserver(serverController);
                 ss.createContexts();
-                response = file.getJSONFile();
+                response = file.getData();
                 responseCode = 200;
             }else{
                 responseCode = 406;
