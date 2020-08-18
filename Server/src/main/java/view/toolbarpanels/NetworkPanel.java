@@ -111,8 +111,8 @@ public class NetworkPanel extends AbstractToolbarPanel{
 
     public void refreshIP() {
         try{
-            localIPTextField.setText(ServerService.getLocalIP());
-            remoteIPTextField.setText(ServerService.getRemoteIP());
+            localIPTextField.setText(ServerService.getInstance().getLocalIP());
+            remoteIPTextField.setText(ServerService.getInstance().getRemoteIP());
             couldNotFindIPLabel.setVisible(false);
         }catch (CouldNotFindIPException e){
             couldNotFindIPLabel.setVisible(true);

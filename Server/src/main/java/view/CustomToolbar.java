@@ -1,9 +1,6 @@
 package view;
 
-import org.jetbrains.annotations.NotNull;
-
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.function.Function;
 
@@ -35,29 +32,16 @@ public class CustomToolbar extends JToolBar {
 
         // build buttons and add to the internal list
         for (ToolbarButtonBuilder buttonBuilder: buttonBuilderList){
-            ToolbarButton button = createToolbarButtonObject(buttonBuilder);
+            ToolbarButton button = createButtonForToolBar(buttonBuilder.getTitle(), buttonBuilder.getImageName(), buttonBuilder.getComponentToDisplay());
             add(button);
             buttonList.add(button);
         }
         setSelectedButton(buttonList.get(0));
     }
 
-    @NotNull
-    private ToolbarButton createToolbarButtonObject(ToolbarButtonBuilder buttonBuilder) {
-        ToolbarButton button = createButtonForToolBar(buttonBuilder.title(), buttonBuilder.imageName(), buttonBuilder.componentToDisplay());
-        return button;
-    }
-
-    public void addInfoButton(ToolbarButtonBuilder infoButton){
-        addSeparator(new Dimension(150,50));
-        ToolbarButton info = createToolbarButtonObject(infoButton);
-        add(info);
-        buttonList.add(info);
-    }
-
     //create individual buttons using a title, image name, and the component it should display
     private ToolbarButton createButtonForToolBar(String title, String imageName, JComponent componentToDisplay){
-        ImageIcon icon = new ImageIcon(PATH_TO_IMAGES + imageName + PNG_EXT);
+        ImageIcon icon = new ImageIcon(PATH_TO_ORIGINAL_IMAGES + imageName + PNG_EXT);
 
         ToolbarButton button = new ToolbarButton(icon, componentToDisplay);
         button.setText(title);
