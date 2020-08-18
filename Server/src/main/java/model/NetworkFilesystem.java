@@ -1,8 +1,15 @@
 package model;
 
+import controller.Main;
 import enums.FileType;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 
 /*
 Abstract filesystem objects which represents files and folders that will be sent through the server
@@ -11,6 +18,7 @@ public abstract class NetworkFilesystem implements Comparable<NetworkFilesystem>
     private final File file;
     private final FileType type;
     private final long hash; // unique hash generated for each file and each folder
+    private boolean isFavorite = false;
 
     private final NetworkFilesystem root; // root object
     protected String pathFromRoot; // path from the root object
@@ -28,6 +36,14 @@ public abstract class NetworkFilesystem implements Comparable<NetworkFilesystem>
         this.type = type;
         this.root = root;
         this.hash = hash(hash);
+    }
+
+    public JSONObject getData(){
+        JSONObject object = new JSONObject();
+        object.put("hash", this.hash);
+        object.put("name", this.getName());
+        object.put("isFavorite", this.isFavorite);
+        return object;
     }
 
     public long getHash(){
@@ -68,7 +84,31 @@ public abstract class NetworkFilesystem implements Comparable<NetworkFilesystem>
 
     //Generate a hashcode using another hashcode as a base
     protected long hash(long previousHash){
-        return this.getName().hashCode() + this.type.hashCode() + previousHash;
+        long hash = 0;
+        if (Main.systemIsMacOS()) {
+            try {
+                BasicFileAttributes attr = Files.readAttributes(Path.of(this.file.getAbsolutePath()), BasicFileAttributes.class);
+                hash = Long.parseLong(attr.fileKey().toString().split("ino=")[1].replace(")", ""));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else{
+            String info = this.getName() + this.type.toString();
+            byte[] allBytes = info.getBytes();
+
+            ByteBuffer wrapped = ByteBuffer.wrap(allBytes);
+            hash = wrapped.getLong() + previousHash;
+        }
+        return hash;
         
+    }
+
+    public void setFavorite(boolean favorite){
+        this.isFavorite = favorite;
+    }
+
+    public boolean isFavorite(){
+        return isFavorite;
     }
 }
