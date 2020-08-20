@@ -2,8 +2,8 @@ package controller;
 
 import enums.FileType;
 import enums.ServerMethodType;
-import model.requests.Context;
 import model.NetworkFile;
+import model.requests.Context;
 import model.requests.Notification;
 import org.json.JSONObject;
 import services.StreamingService;
@@ -22,6 +22,7 @@ public class Controller extends ControllerManager {
     private static final String GET_NOTIFICATION = "Get Data Request Received";
     private static final String UPDATE_MODEL = "Update Folders and Files Received";
     private static final String REFRESH_NOTIFICATION = "Refresh Notification Received";
+    private static final String FAVORITE_NOTIFICATION = "Get Favorites";
 
     public static final String CACHE_FOLDER_IGNORE_STR = ".Caches";
     public static final String PATH_TO_CACHE_FOLDER = "/" + CACHE_FOLDER_IGNORE_STR;
@@ -34,6 +35,7 @@ public class Controller extends ControllerManager {
     private static final String GET_DATA_HANDLER_PATH = "/get-data/";
     private static final String REFRESH_HANDLER_PATH = "/Refresh/";
     private static final String STREAM_PATH = "/start_stream/";
+    private static final String GET_FAVORITES_PATH = "/Get_favorites/";
 
     private final DataController dataController;
     private final ServerController serverController;
@@ -74,6 +76,7 @@ public class Controller extends ControllerManager {
         contextList.add(new Context(GET_DATA_HANDLER_PATH, ServerMethodType.GET, new Notification(GET_NOTIFICATION)));
         contextList.add(new Context(PATCH_FILE_FOLDER_PATH, ServerMethodType.PATCH, new Notification(UPDATE_MODEL)));
         contextList.add(new Context(STREAM_PATH, ServerMethodType.POST, new Notification(STREAM_NOTIFICATION)));
+        contextList.add(new Context(GET_FAVORITES_PATH, ServerMethodType.GET, new Notification(FAVORITE_NOTIFICATION)));
         return contextList;
     }
 
@@ -83,14 +86,23 @@ public class Controller extends ControllerManager {
 
     @Override
     public void notificationReceived(Notification notification, Object obj, long id) {
-
+        System.out.println("Received notification " + notification.name());
         switch (notification.name()){
             case STREAM_NOTIFICATION ->handleFileStreamingRequested(obj, id);
             case GET_NOTIFICATION -> handleGetData(id);
             case UPDATE_MODEL -> handlePatchWithHash(obj, id);
             case REFRESH_NOTIFICATION -> handleRefresh(id);
+            case FAVORITE_NOTIFICATION -> handleGetFavorites(id);
             default -> System.out.println("Incorrecto notification: " + notification.name() + " " +  obj.toString() + " " + id);
         }
+    }
+
+    private void handleGetFavorites(long id){
+        JSONObject response = new JSONObject();
+        response.put("message", "Favorites");
+        response.put("folders", dataController.getJSONDataFavorites());
+        System.out.println(response.toString());
+        serverController.handleRequestResponse(id, response,200);
     }
 
     public void handleFileStreamingRequested(Object obj, long id){

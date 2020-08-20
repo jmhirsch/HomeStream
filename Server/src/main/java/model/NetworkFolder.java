@@ -46,6 +46,13 @@ public class NetworkFolder extends NetworkFilesystem {
         this.pathFromRoot = "/";
     }
 
+    public NetworkFolder(File file, String [] extensionArray, String [] folderNamesToIgnore, boolean do_not_create_folders){
+        super(file, FileType.FOLDER, 0);
+        this.pathFromRoot = "/";
+        this.extensionArray = extensionArray;
+        this.folderNamesToIgnore = folderNamesToIgnore;
+    }
+
     // Public constructor for all filetypes and all folders
     public NetworkFolder(File file){
         this(file, new String[0], new String[0]);
@@ -65,6 +72,24 @@ public class NetworkFolder extends NetworkFilesystem {
 
     }
 
+    public void addNetworkItem(NetworkFilesystem item){
+        if (item instanceof NetworkFile file){
+            files.put(file.getHash(), file);
+            files = (Map<Long, NetworkFile>) sortByValue(files, true);
+        }else if (item instanceof NetworkFolder folder){
+            folders.put(folder.getHash(), folder);
+            folders = (Map<Long, NetworkFolder>) sortByValue(folders, true);
+        }
+    }
+
+    public void removeNetworkItem(NetworkFilesystem item){
+        if (item instanceof NetworkFile file){
+            files.remove(file.getHash());
+        }else if (item instanceof NetworkFolder folder){
+            folders.remove(folder.getHash());
+        }
+    }
+
     private void setupChildrenAndSort(File file) {
         addSubfolders(file);
         addFiles(file);
@@ -73,8 +98,8 @@ public class NetworkFolder extends NetworkFilesystem {
 
     //Sorts according to implementation of compareTo(). Default is alphabetical
     private void sort() {
-       folders = (Map<Long, NetworkFolder>) sortByValue(folders, true);
-       files = (Map<Long, NetworkFile>) sortByValue(files, true);
+        folders = (Map<Long, NetworkFolder>) sortByValue(folders, true);
+        files = (Map<Long, NetworkFile>) sortByValue(files, true);
     }
 
 
@@ -117,7 +142,6 @@ public class NetworkFolder extends NetworkFilesystem {
                 if (!subfile.getName().startsWith(".") && fileExtensionExistsInList(subfile.getName())) {
                     NetworkFile newFile = new NetworkFile(subfile, this.pathFromRoot, this.getRoot(), this.getHash());
                     this.files.put(newFile.getHash(), newFile);
-                    //printData(nFile);
                 }
             }
         }
@@ -156,7 +180,7 @@ public class NetworkFolder extends NetworkFilesystem {
         if (subfolders != null) {
             for (File subfolder: subfolders){
                 if (folderShouldBeIgnored(subfolder.getName()) ||
-                subfolder.getName().startsWith(".")){
+                        subfolder.getName().startsWith(".")){
                     continue;
                 }
                 NetworkFolder newFolder = new NetworkFolder(subfolder, this.pathFromRoot, this.getRoot(), this.getHash(), extensionArray, folderNamesToIgnore);

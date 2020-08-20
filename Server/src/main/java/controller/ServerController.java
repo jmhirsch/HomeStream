@@ -73,8 +73,6 @@ public class ServerController implements Observer {
     }
 
     public synchronized void respondToRequest(JSONObject response, HttpExchange exchange, int responseCode) {
-
-        System.out.println(response.toString());
         try {
             byte[] responseBytes = response.toString().getBytes();
             exchange.sendResponseHeaders(responseCode, responseBytes.length);

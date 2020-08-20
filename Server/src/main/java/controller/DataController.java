@@ -2,6 +2,7 @@ package controller;
 
 import interfaces.NotificationListener;
 import model.NetworkFile;
+import model.NetworkFilesystem;
 import model.NetworkFolder;
 import observer.Subject;
 import org.json.JSONObject;
@@ -17,6 +18,7 @@ public final class DataController extends Subject {
     private static final String DATA_FILE_LOCATION = "data.hs";
     private final NotificationListener notificationListener;
     private NetworkFolder root;
+    private NetworkFolder favorite;
     private final UserDataService userDataService;
 
     public DataController(NotificationListener notificationListener){
@@ -26,6 +28,7 @@ public final class DataController extends Subject {
 
     public void createData(String path, String[] extensionList, String [] foldersToIgnore) {
         root = new NetworkFolder(new File(path), extensionList, foldersToIgnore);
+        favorite = new NetworkFolder(new File(path), extensionList, foldersToIgnore, true);
         load();
         System.out.println("root path: " + root.getFile().getPath());
     }
@@ -39,20 +42,31 @@ public final class DataController extends Subject {
         if (file == null){
             return false;
         }
-        file.setFavorite(isFavorite);
+        updateFavoriteStatus(isFavorite, file);
         file.setCurrentPlaybackPosition(playbackPosition);
         save();
         return true;
     }
+
+    public JSONObject getJSONDataFavorites(){return favorite.getJSONItems();}
 
     public boolean updateFolderAtHash(long hash, boolean isFavorite){
         NetworkFolder folder = getFolder(hash);
         if (folder == null){
             return false;
         }
-        folder.setFavorite(isFavorite);
+        updateFavoriteStatus(isFavorite, folder);
         save();
         return true;
+    }
+
+    private void updateFavoriteStatus(boolean isFavorite, NetworkFilesystem item) {
+        item.setFavorite(isFavorite);
+        if (isFavorite){
+            favorite.addNetworkItem(item);
+        }else{
+            favorite.removeNetworkItem(item);
+        }
     }
 
     public NetworkFile getFile(long hash){
@@ -100,6 +114,9 @@ public final class DataController extends Subject {
             if (!name.equalsIgnoreCase(file.getName())){
                 fileData.put("name", file.getName());
             }
+            if (file.isFavorite()){
+                favorite.addNetworkItem(file);
+            }
         }
 
         for (NetworkFolder subfolder: folder.getFolders()){
@@ -109,6 +126,9 @@ public final class DataController extends Subject {
                 String name = folderData.getString("name");
                 if (!name.equalsIgnoreCase(subfolder.getName())){
                     folderData.put("name", subfolder.getName());
+                }
+                if (folder.isFavorite()){
+                    favorite.addNetworkItem(folder);
                 }
             }
             updateData(data, subfolder);
