@@ -1,7 +1,7 @@
 package services;
 
 import controller.Controller;
-import model.NetworkFile;
+import model.network.NetworkFile;
 import org.bytedeco.javacpp.Loader;
 
 import java.io.BufferedReader;
@@ -37,7 +37,9 @@ public class M3U8EncoderService {
         if (Files.notExists(Path.of(pathToCacheFolder))){
             try {
                 Files.createDirectories(Path.of(pathToCacheFolder));
+                System.out.println("Created .. " + pathToCacheFolder);
             } catch (IOException e) {
+                System.err.println("Error in Checking / Creating cache folder");
                 e.printStackTrace();
             }
         }
@@ -45,7 +47,9 @@ public class M3U8EncoderService {
         if (Files.notExists(Path.of(this.pathToMovieCacheFolder))){
             try {
                 Files.createDirectories(Path.of(this.pathToMovieCacheFolder));
+                System.out.println("Created.. : " + this.pathToMovieCacheFolder);
             } catch (IOException e) {
+                System.err.println("Error in Creating / checking directory for specific movie");
                 e.printStackTrace();
             }
         }
@@ -63,7 +67,7 @@ public class M3U8EncoderService {
 
 
 
-        if (extension.equals(".mp4")){
+        if (extension.equals(".mp4") || extension.equals(".m4v")){
             commandList.add(fileToEncode.getFile().getPath());
             commandList.addAll(getMP4EncodeOptions());
         } else if (extension.equals(".mkv")){

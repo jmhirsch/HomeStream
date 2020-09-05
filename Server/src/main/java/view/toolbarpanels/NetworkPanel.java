@@ -1,10 +1,10 @@
 package view.toolbarpanels;
 
+import com.flynnbuc.httpserverwrapper.services.IPAddressChecker;
 import exceptions.CouldNotFindIPException;
 import enums.Property;
 import net.miginfocom.swing.MigLayout;
 import services.PropertyService;
-import services.ServerService;
 import view.UI;
 
 import javax.swing.*;
@@ -111,10 +111,10 @@ public class NetworkPanel extends AbstractToolbarPanel{
 
     public void refreshIP() {
         try{
-            localIPTextField.setText(ServerService.getLocalIP());
-            remoteIPTextField.setText(ServerService.getRemoteIP());
+            localIPTextField.setText(IPAddressChecker.getLocalIP());
+            remoteIPTextField.setText(IPAddressChecker.getRemoteIP());
             couldNotFindIPLabel.setVisible(false);
-        }catch (CouldNotFindIPException e){
+        }catch (com.flynnbuc.httpserverwrapper.exceptions.CouldNotFindIPException e){
             couldNotFindIPLabel.setVisible(true);
         }
     }

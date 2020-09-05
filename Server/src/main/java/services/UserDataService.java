@@ -12,9 +12,13 @@ import java.util.stream.Collectors;
 public class UserDataService {
 
 
-    private final String data_file_location;
-    public UserDataService(String data_file_location){
-        this.data_file_location = data_file_location;
+    private final String movieData_file_location;
+    private final String moviePreferences_file_location;
+//    private final String tvShowData_file_location;
+//    private final String tvShowPreferences_file_location;
+    public UserDataService(String movieData_file_location, String moviePreferences_file_location){
+        this.movieData_file_location = movieData_file_location;
+        this.moviePreferences_file_location = moviePreferences_file_location;
     }
 
     public void write(Map<Long, JSONObject> map){
@@ -23,7 +27,7 @@ public class UserDataService {
 
     public void write(JSONObject object){
         try {
-            FileWriter writer = new FileWriter(new File(data_file_location));
+            FileWriter writer = new FileWriter(new File(movieData_file_location));
             object.write(writer);
             writer.close();
         } catch (IOException e) {
@@ -37,9 +41,9 @@ public class UserDataService {
     public JSONObject read(){
         JSONObject data = null;
         try {
-            if (Files.exists(Path.of(data_file_location))) {
+            if (Files.exists(Path.of(movieData_file_location))) {
                 System.out.println("File exists!");
-                InputStream is = new BufferedInputStream(new FileInputStream(data_file_location));
+                InputStream is = new BufferedInputStream(new FileInputStream(movieData_file_location));
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 String requestStr = reader.lines().collect(Collectors.joining("\n"));
                 JSONTokener parser = new JSONTokener(requestStr);

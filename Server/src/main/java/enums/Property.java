@@ -12,7 +12,9 @@ public enum Property {
     REQUIRE_AUTHENTICATION("require_authentication"), //bool
     START_ON_LOGIN("start_on_login"), // bool
     USE_DIFFERENT_REMOTE_PORT("use_different_remote_port"), // bool
-    USERNAME("username"); // str
+    USERNAME("username"), // str
+    AUTO_DELETE_CACHE("auto_delete_cache"), //str
+    CACHE_AUTODELETE_SIZE("cache_autodelete_size");// int
     
     
     private final String tag;

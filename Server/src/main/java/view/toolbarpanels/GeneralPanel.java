@@ -6,9 +6,16 @@ import services.PropertyService;
 import view.UI;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.NumberFormatter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /*
 General panel, to be used inside a CustomToolbar.
@@ -25,6 +32,8 @@ public class GeneralPanel extends AbstractToolbarPanel  {
     private final JCheckBox autoStartCheckbox;
     private final JTextField folderPathField;
     private final JLabel runningLabel;
+    private final JCheckBox keepCacheSizeBox;
+    private final JSpinner numGBSpinner;
     private final UI ui;
 
 
@@ -75,6 +84,23 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         rootFolderChooserButton.addActionListener(e -> chooseBaseFolder());
 
 
+        SpinnerNumberModel model = new SpinnerNumberModel(10, 1, 10000, 1);
+        numGBSpinner = new JSpinner(model);
+        numGBSpinner.addChangeListener(e -> PropertyService.getInstance().setProperty(Property.CACHE_AUTODELETE_SIZE, numGBSpinner.getValue().toString()));
+
+
+        JFormattedTextField textField = ((JSpinner.NumberEditor) numGBSpinner.getEditor()).getTextField();
+        ((NumberFormatter)textField.getFormatter()).setAllowsInvalid(false);
+
+        keepCacheSizeBox = new JCheckBox("Keep cache under ");
+        keepCacheSizeBox.addActionListener(e -> {
+            boolean selected = keepCacheSizeBox.isSelected();
+            numGBSpinner.setEnabled(selected);
+            PropertyService.getInstance().setProperty(Property.AUTO_DELETE_CACHE, selected);
+        });
+        JLabel gbLabel = new JLabel("GB");
+
+
         setLayout(new MigLayout("", "[right]5[left]", "[]10[]"));
 
         add(new JLabel("Server Directory:"));
@@ -84,7 +110,12 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         add(new JLabel());
         add(toggleServiceButton, "split 2");
         add(runningLabel, "wrap");
-        add(autoStartCheckbox, "skip, ax left");
+        add(autoStartCheckbox, "skip, ax left, wrap");
+        add(new JLabel());
+        add(keepCacheSizeBox, "split 3");
+        add(numGBSpinner);
+        add(gbLabel);
+
     }
 
     public void startService(){
@@ -146,6 +177,15 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
         autoStartCheckbox.setSelected(autoStart);
 
+        int value = PropertyService.getInstance().getPropertyAsInt(Property.CACHE_AUTODELETE_SIZE);
+        if (value == -1){
+            value = 5;
+        }
+
+        numGBSpinner.setValue(value);
+        boolean selected = PropertyService.getInstance().getPropertyAsBool(Property.AUTO_DELETE_CACHE);
+        keepCacheSizeBox.setSelected(selected);
+        numGBSpinner.setEnabled(selected);
     }
 
     @Override

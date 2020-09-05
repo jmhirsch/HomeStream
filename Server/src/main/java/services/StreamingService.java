@@ -1,13 +1,15 @@
 package services;
 
+import com.flynnbuc.httpserverwrapper.main.ServerController;
+import com.flynnbuc.httpserverwrapper.model.Handler;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import controller.Controller;
-import model.NetworkFile;
-import model.requests.Handler;
-import observer.Subject;
+import model.network.NetworkFile;
 
 import javax.swing.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -19,12 +21,13 @@ import java.util.ArrayList;
 Defines a Service objects which makes a file available for streaming using a M3U8 Playlist (Apple HLS)
 Designed to work with Server service. SecureKey is used to authenticate itself with server Requires M3U8 Encoder Service.
  */
-public class StreamingService extends Subject {
+public class StreamingService {
     private final String pathToServerDirectory;
     private final String pathToTSCache;
     private final ArrayList<String> paths;
     private final String pathToPlaylist;
     private final String encodedHash;
+    PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 
     public StreamingService(NetworkFile fileToPlay, String url) {
@@ -96,12 +99,17 @@ public class StreamingService extends Subject {
         }
     }
 
+    public void addPropertyChangeListnener(PropertyChangeListener listener){
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+
     //Create contexts for .TS files and M3U8 playlist
     public void createContexts() {
-        notifyObservers(new M3U8PlaylistStreamHandler("/" + encodedHash + "/Play/", pathToPlaylist));
+        propertyChangeSupport.firePropertyChange(ServerController.PROPERTY_CHANGE_STR, null, new M3U8PlaylistStreamHandler("/" + encodedHash + "/Play/", pathToPlaylist));
         for (String path : paths) {
-            notifyObservers(new TSStreamHandler(path, new File(pathToServerDirectory + path)));
+            propertyChangeSupport.firePropertyChange(ServerController.PROPERTY_CHANGE_STR, null, new TSStreamHandler(path, new File(pathToServerDirectory + path)));
         }
+        System.out.println("Done adding contexts");
     }
 
     //Returns a URL-conforming String of a given value

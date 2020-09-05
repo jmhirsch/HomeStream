@@ -21,7 +21,7 @@ Defines the UI of the class. Optimized for MacOS, not tested on Windows or linux
  */
 //TODO: pass PropertyService
 public class UI extends JFrame {
-    public static final String CHOOSE_MOVIE_FOLDER = "Choose Movie Folder";
+    public static final String CHOOSE_MOVIE_FOLDER = "Choose Data Folder";
     public static final String MIG_WRAP = "wrap";
     public static final String IP_ERROR_STR = "Could not determine IP";
 
