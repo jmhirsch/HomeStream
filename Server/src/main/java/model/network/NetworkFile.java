@@ -32,14 +32,30 @@ public class NetworkFile extends NetworkFilesystem {
 
     // Returns a JSONObject of the file containing its name and its hash
     public JSONObject getData(){
+        JSONObject jsonFile = getFilePrefs();
+        if (data != null) {
+            jsonFile.put("data", getFileData());
+        }
+        return jsonFile;
+    }
+
+    public JSONObject getFilePrefs(){
         JSONObject jsonFile = super.getData();
         jsonFile.put("playbackPosition", currentPlaybackPosition);
         jsonFile.put("databaseKey", databasekey);
         jsonFile.put("type", dataType.toString());
-        if (data != null) {
-            jsonFile.put("data", data.toJSONObject());
-        }
         return jsonFile;
+    }
+
+    public JSONObject getFileData(){
+        if (data != null) {
+            JSONObject object = data.toJSONObject();
+            object.put("databaseKey", databasekey);
+            object.put("hash", getHash());
+            return object;
+        }else{
+            return null;
+        }
     }
 
     public void setData(Data data){

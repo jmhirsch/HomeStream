@@ -14,20 +14,23 @@ public class UserDataService {
 
     private final String movieData_file_location;
     private final String moviePreferences_file_location;
-//    private final String tvShowData_file_location;
-//    private final String tvShowPreferences_file_location;
     public UserDataService(String movieData_file_location, String moviePreferences_file_location){
         this.movieData_file_location = movieData_file_location;
         this.moviePreferences_file_location = moviePreferences_file_location;
     }
 
-    public void write(Map<Long, JSONObject> map){
-        write(new JSONObject(map));
+
+    public void writeData(JSONObject object){
+        write(object, movieData_file_location);
     }
 
-    public void write(JSONObject object){
+    public void writePrefs(JSONObject object){
+        write(object, moviePreferences_file_location);
+    }
+
+    private void write(JSONObject object, String location){
         try {
-            FileWriter writer = new FileWriter(new File(movieData_file_location));
+            FileWriter writer = new FileWriter(new File(location));
             object.write(writer);
             writer.close();
         } catch (IOException e) {
@@ -35,15 +38,20 @@ public class UserDataService {
         }
     }
 
+    public JSONObject readData(){
+        return read(movieData_file_location);
+    }
 
+    public JSONObject readPrefs(){
+        return read(moviePreferences_file_location);
+    }
 
-
-    public JSONObject read(){
+    private JSONObject read(String location){
         JSONObject data = null;
         try {
-            if (Files.exists(Path.of(movieData_file_location))) {
+            if (Files.exists(Path.of(location))) {
                 System.out.println("File exists!");
-                InputStream is = new BufferedInputStream(new FileInputStream(movieData_file_location));
+                InputStream is = new BufferedInputStream(new FileInputStream(location));
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 String requestStr = reader.lines().collect(Collectors.joining("\n"));
                 JSONTokener parser = new JSONTokener(requestStr);

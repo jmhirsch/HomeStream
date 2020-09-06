@@ -32,7 +32,7 @@ public class TMDBData {
     private final MoviesService moviesService;
     private final SearchService searchService;
     public TMDBData() {
-        tmdb = new Tmdb("w");
+        tmdb = new Tmdb("173b789d94a7a1318de3aa759a1ddd79");
         moviesService = tmdb.moviesService();
         searchService = tmdb.searchService();
 
