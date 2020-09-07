@@ -39,13 +39,12 @@ public class Controller implements ContextManager {
     public static final String DEFAULT_USERNAME = "admin";
     public static final String DEFAULT_PW = "admin";
 
-    private static final String PLAY_FILE_PATH = "/Play/";
-    private static final String PATCH_FILE_FOLDER_PATH = "/Patch-file-folder/";
+    private static final String PATCH_FILE_FOLDER_PATH = "/patch-file-folder/";
     private static final String GET_DATA_HANDLER_PATH = "/get-data/";
-    private static final String REFRESH_HANDLER_PATH = "/Refresh/";
+    private static final String REFRESH_HANDLER_PATH = "/refresh/";
     private static final String STREAM_PATH = "/start_stream/";
-    private static final String GET_FAVORITES_PATH = "/Get_favorites/";
-    private static final String AUTHENTICATE_PATH = "/Authenticate/";
+    private static final String GET_FAVORITES_PATH = "/get_favorites/";
+    private static final String AUTHENTICATE_PATH = "/authenticate/";
     private static final String PING_PATH = "/ping/";
     private static final String GET_TV_SHOW_PATHS = "/get-tv-show/";
 

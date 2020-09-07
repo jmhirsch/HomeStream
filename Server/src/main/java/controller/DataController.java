@@ -245,7 +245,7 @@ public final class DataController implements Loadable, Saveable {
     }
 
     private MovieData getDataFromJSON(JSONObject filedata) {
-        filedata = filedata.getJSONObject("data");
+        //filedata = filedata.getJSONObject("data");
         String title = filedata.getString("title");
         String language = filedata.getString("language");
         String description = filedata.getString("description");
