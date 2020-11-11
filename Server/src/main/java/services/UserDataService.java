@@ -6,26 +6,25 @@ import org.json.JSONTokener;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class UserDataService {
 
 
-    private final String movieData_file_location;
-    private final String moviePreferences_file_location;
-    public UserDataService(String movieData_file_location, String moviePreferences_file_location){
-        this.movieData_file_location = movieData_file_location;
-        this.moviePreferences_file_location = moviePreferences_file_location;
+    private final String dataPath;
+    private final String prefPath;
+    public UserDataService(String dataPath, String prefPath){
+        this.dataPath = dataPath;
+        this.prefPath = prefPath;
     }
 
 
     public void writeData(JSONObject object){
-        write(object, movieData_file_location);
+        write(object, dataPath);
     }
 
     public void writePrefs(JSONObject object){
-        write(object, moviePreferences_file_location);
+        write(object, prefPath);
     }
 
     private void write(JSONObject object, String location){
@@ -39,11 +38,11 @@ public class UserDataService {
     }
 
     public JSONObject readData(){
-        return read(movieData_file_location);
+        return read(dataPath);
     }
 
     public JSONObject readPrefs(){
-        return read(moviePreferences_file_location);
+        return read(prefPath);
     }
 
     private JSONObject read(String location){

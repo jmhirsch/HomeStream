@@ -6,6 +6,7 @@ public enum Property {
     AUTO_LAUNCH_SERVER("auto_launch_server"), // bool
     LOCAL_PORT("local_port"), // int
     MOVIE_FOLDER("movie_folder"), // str
+    TV_SHOW_FOLDER("tv_show_folder"), // str
     PASSWORD("password"), // str
     REMOTE_ACCESS_ENABLED("remote_access_enabled"), // bool
     REMOTE_PORT("remote_port"), // int

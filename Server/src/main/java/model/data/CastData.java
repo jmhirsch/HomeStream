@@ -5,7 +5,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CastData extends Data {
+public class CastData extends DefaultData {
     private final String name;
     private final String character;
     private final int order;

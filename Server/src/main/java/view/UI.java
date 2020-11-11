@@ -107,8 +107,8 @@ public class UI extends JFrame {
 
     }
 
-    public void processFileChooserInput(String s) {
-        controller.processFileChooserInput(s);
+    public void processFileChooserInput(String moviePath, String tvshowPath) {
+        controller.processFileChooserInput(moviePath, tvshowPath);
     }
 
     //Call save on all subpanels

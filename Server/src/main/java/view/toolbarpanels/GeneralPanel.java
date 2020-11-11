@@ -6,16 +6,10 @@ import services.PropertyService;
 import view.UI;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /*
 General panel, to be used inside a CustomToolbar.
@@ -30,7 +24,8 @@ public class GeneralPanel extends AbstractToolbarPanel  {
     private final JButton toggleServiceButton;
     private final JButton rootFolderChooserButton;
     private final JCheckBox autoStartCheckbox;
-    private final JTextField folderPathField;
+    private final JTextField moviePathField;
+    private final JTextField tvShowPathField;
     private final JLabel runningLabel;
     private final JCheckBox keepCacheSizeBox;
     private final JSpinner numGBSpinner;
@@ -46,13 +41,31 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         selectServerFolderDialog.setMultipleMode(false);
         selectServerFolderDialog.setDirectory("~");
 
-        folderPathField = new JTextField();
-        folderPathField.setEnabled(true);
-        folderPathField.setEditable(false);
-        folderPathField.setText(FOLDER_PATH_FIELD_DEFAULT_TEXT);
-        folderPathField.setForeground(Color.lightGray);
-        folderPathField.setPreferredSize(new Dimension(250, folderPathField.getPreferredSize().height));
-        folderPathField.addFocusListener(new FocusListener() {
+
+        tvShowPathField = new JTextField();
+        tvShowPathField.setEnabled(true);
+        tvShowPathField.setEditable(false);
+        tvShowPathField.setText(FOLDER_PATH_FIELD_DEFAULT_TEXT);
+        tvShowPathField.setForeground(Color.lightGray);
+        tvShowPathField.setPreferredSize(new Dimension(250, tvShowPathField.getPreferredSize().height));
+        tvShowPathField.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                ui.giveUpFocusToLabel();
+                chooseBaseFolder();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) { }
+        });
+
+        moviePathField = new JTextField();
+        moviePathField.setEnabled(true);
+        moviePathField.setEditable(false);
+        moviePathField.setText(FOLDER_PATH_FIELD_DEFAULT_TEXT);
+        moviePathField.setForeground(Color.lightGray);
+        moviePathField.setPreferredSize(new Dimension(250, moviePathField.getPreferredSize().height));
+        moviePathField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
                 ui.giveUpFocusToLabel();
@@ -103,8 +116,10 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
         setLayout(new MigLayout("", "[right]5[left]", "[]10[]"));
 
-        add(new JLabel("Server Directory:"));
-        add(folderPathField, "wrap");
+        add(new JLabel("Movie Directory:"));
+        add(moviePathField, "wrap");
+        add(new JLabel("TV Show Directory:"));
+        add(tvShowPathField, "wrap");
         add(new JLabel());
         add(rootFolderChooserButton, "wrap");
         add(new JLabel());
@@ -119,7 +134,7 @@ public class GeneralPanel extends AbstractToolbarPanel  {
     }
 
     public void startService(){
-        ui.processFileChooserInput(folderPathField.getText());
+        ui.processFileChooserInput(moviePathField.getText(), tvShowPathField.getText());
         ui.startService(this::toggleService);
     }
 
@@ -131,14 +146,23 @@ public class GeneralPanel extends AbstractToolbarPanel  {
         rootFolderChooserButton.setSelected(false);
         repaint();
         selectServerFolderDialog.setVisible(true);
-        String filename = selectServerFolderDialog.getFile();
+        String movieFolder = selectServerFolderDialog.getFile();
         selectServerFolderDialog.setFile(null);
-        if (filename != null) {
+        if (movieFolder != null) {
 
-            folderPathField.setText(selectServerFolderDialog.getDirectory() + filename);
-            selectServerFolderDialog.setDirectory(selectServerFolderDialog.getDirectory() + filename);
-            toggleServiceButton.setEnabled(true);
-            save();
+            moviePathField.setText(selectServerFolderDialog.getDirectory() + movieFolder);
+            selectServerFolderDialog.setDirectory(selectServerFolderDialog.getDirectory() + movieFolder);
+
+            selectServerFolderDialog.setVisible(true);
+            String tvshowfolder = selectServerFolderDialog.getFile();
+            selectServerFolderDialog.setFile(null);
+            if (tvshowfolder != null){
+                tvShowPathField.setText(selectServerFolderDialog.getDirectory() + tvshowfolder);
+                selectServerFolderDialog.setDirectory(selectServerFolderDialog.getDirectory() + tvshowfolder);
+                toggleServiceButton.setEnabled(true);
+                save();
+            }
+
         }
     }
 
@@ -151,7 +175,7 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
     private Void toggleService(boolean toggle) {
         rootFolderChooserButton.setEnabled(!toggle);
-        folderPathField.setFocusable(!toggle);
+        moviePathField.setFocusable(!toggle);
         runningLabel.setVisible(toggle);
         if (toggle){
             toggleServiceButton.setText(STOP_SERVICE_STR);
@@ -163,13 +187,21 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
     @Override
     public void load() {
-        String path = PropertyService.getInstance().getProperty(Property.MOVIE_FOLDER);
-        if (path == null || path.equals("null")){
-            path = "none set";
+        String moviePath = PropertyService.getInstance().getProperty(Property.MOVIE_FOLDER);
+        if (moviePath == null || moviePath.equals("null")){
+            moviePath = "none set";
         }
-        folderPathField.setText(path);
-        selectServerFolderDialog.setDirectory(path);
-        if (folderPathField.getText().contains("/"));{
+        moviePathField.setText(moviePath);
+
+        String tvShowPath = PropertyService.getInstance().getProperty(Property.TV_SHOW_FOLDER);
+        if (tvShowPath  == null || tvShowPath.equals("null")){
+            tvShowPath = "none set";
+        }
+
+        tvShowPathField.setText(tvShowPath);
+
+        selectServerFolderDialog.setDirectory(moviePath);
+        if (moviePathField.getText().contains("/") && tvShowPathField.getText().contains("/"));{
             toggleServiceButton.setEnabled(true);
         }
 
@@ -190,6 +222,7 @@ public class GeneralPanel extends AbstractToolbarPanel  {
 
     @Override
     public void save() {
-        PropertyService.getInstance().setProperty(Property.MOVIE_FOLDER, folderPathField.getText());
+        PropertyService.getInstance().setProperty(Property.MOVIE_FOLDER, moviePathField.getText());
+        PropertyService.getInstance().setProperty(Property.TV_SHOW_FOLDER, tvShowPathField.getText());
     }
 }

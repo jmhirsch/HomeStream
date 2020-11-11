@@ -5,7 +5,7 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-public class EpisodeData extends Data{
+public class EpisodeData extends DefaultData {
     private final String overview;
     private final String airDate;
     private final int episodeNum;

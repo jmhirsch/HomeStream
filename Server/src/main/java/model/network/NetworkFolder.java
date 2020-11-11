@@ -51,6 +51,17 @@ public class NetworkFolder extends NetworkFilesystem {
         this.pathFromRoot = "/";
     }
 
+    public NetworkFolder(File file, String[] extensionArray, String [] folderNamesToIgnore, DataType subfilesDataType) {
+        super(file, FileType.FOLDER, 0);
+        this.subfilesDataType = subfilesDataType;
+        this.pathFromRoot = "";
+        this.extensionArray = extensionArray;
+        this.folderNamesToIgnore = folderNamesToIgnore;
+        setupChildrenAndSort(file);
+        this.pathFromRoot = "/";
+
+    }
+
     public NetworkFolder(File file, String [] extensionArray, String [] folderNamesToIgnore, boolean do_not_create_folders){
         super(file, FileType.FOLDER, 0);
         this.pathFromRoot = "/";
@@ -264,7 +275,7 @@ public class NetworkFolder extends NetworkFilesystem {
     public JSONArray getJSONFiles(){
         JSONArray items = new JSONArray();
         for (Map.Entry<Long, NetworkFile> entry: files.entrySet()){
-            items.put(entry.getValue().getData());
+            items.put(entry.getValue().getAll());
         }
         return items;
     }

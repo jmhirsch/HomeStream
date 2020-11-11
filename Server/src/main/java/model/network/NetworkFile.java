@@ -3,7 +3,8 @@ package model.network;
 
 import enums.DataType;
 import enums.FileType;
-import model.data.Data;
+import interfaces.Data;
+import model.data.DefaultData;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -37,6 +38,17 @@ public class NetworkFile extends NetworkFilesystem {
             jsonFile.put("data", getFileData());
         }
         return jsonFile;
+    }
+
+    public JSONObject getAll(){
+        JSONObject data = super.getData();
+        data.put("playbackPosition", currentPlaybackPosition);
+        data.put("databaseKey", databasekey);
+        data.put("type", dataType.toString());
+        if (this.data != null){
+            data.put("data", this.data.toJSONObject());
+        }
+        return data;
     }
 
     public JSONObject getFilePrefs(){

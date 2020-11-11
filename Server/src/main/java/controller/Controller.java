@@ -24,29 +24,35 @@ import java.util.function.Function;
 
 public class Controller implements ContextManager {
 
-    private static final String STREAM_NOTIFICATION = "Stream Request Received";
-    private static final String GET_NOTIFICATION = "Get Data Request Received";
-    private static final String UPDATE_MODEL = "Update Folders and Files Received";
-    private static final String REFRESH_NOTIFICATION = "Refresh Notification Received";
-    private static final String FAVORITE_NOTIFICATION = "Get Favorites";
-    private static final String AUTHENTICATION_NOTIFICATION = "Authenticate";
-    private static final String GET_TV_SHOW_NOTIFICATION = "Get TV Shows";
-    private static final String PING = "ping";
-
     public static final String CACHE_FOLDER_IGNORE_STR = ".Caches";
     public static final String PATH_TO_CACHE_FOLDER = "/" + CACHE_FOLDER_IGNORE_STR;
     public static final int DEFAULT_PORT = 3004;
     public static final String DEFAULT_USERNAME = "admin";
     public static final String DEFAULT_PW = "admin";
 
+
+    // GET
+    private static final String GET_DATA_HANDLER_PATH = "/get/all/";
+    private static final String GET_FAVORITES_PATH = "/get/favorites/all/";
+    private static final String GET_TV_SHOW_PATHS = "/get/tv-show/";
+    private static final String GET_MOVIES_PATH = "/get/movies/";
+    private static final String GET_MOVIES_FAVORITES_PATH = "/get/movies/favorites";
+
+    //REFRESH (POST)
+    private static final String REFRESH_ALL_HANDLER_PATH = "/refresh/all/";
+    private static final String REFRESH_MOVIES_PATH = "/refresh/movies/";
+    private static final String REFRESH_TV_SHOWS_PATH = "/refresh/tv-shows/";
+
+    //PATCH
+    private static final String PATCH_TV_SHOW = "/patch/tv-shows/";
+    private static final String PATCH_MOVIE = "/patch/movies/";
     private static final String PATCH_FILE_FOLDER_PATH = "/patch-file-folder/";
-    private static final String GET_DATA_HANDLER_PATH = "/get-data/";
-    private static final String REFRESH_HANDLER_PATH = "/refresh/";
+
+
     private static final String STREAM_PATH = "/start_stream/";
-    private static final String GET_FAVORITES_PATH = "/get_favorites/";
     private static final String AUTHENTICATE_PATH = "/authenticate/";
     private static final String PING_PATH = "/ping/";
-    private static final String GET_TV_SHOW_PATHS = "/get-tv-show/";
+
 
     private final DataController dataController;
     private final JSONServerController serverController;
@@ -58,41 +64,45 @@ public class Controller implements ContextManager {
             ".webm", ".flv", ".avi", ".mpg", ".mkv", ".ts", ".srt"};
 
     private static final String [] foldersToIngore = {CACHE_FOLDER_IGNORE_STR};
-    private String currentPath;
+    private String currentMoviePath;
+    private String currentTVShowPath;
 
     public Controller() {
-        currentPath = "";
+        currentMoviePath = "";
+        currentTVShowPath = "";
         tokens = new ArrayList<>();
         dataController = new DataController();
         serverController = new JSONServerController(this);
     }
 
 
-    public void processFileChooserInput(String path) {
-        currentPath = path;
+    public void processFileChooserInput(String moviePath, String tvShowPath) {
+        currentMoviePath = moviePath;
+        currentTVShowPath = tvShowPath;
         requestDataCreation();
     }
 
     private void requestDataCreation(){
-        dataController.createData(currentPath, extensionlist, foldersToIngore);
+        dataController.createData(currentMoviePath, currentTVShowPath, extensionlist, foldersToIngore);
     }
 
     public void startServerService(int portNum, Function<Boolean, Void> callback) {
-        if (!currentPath.equals("")) { // ensure a folder is actually selected
+        if (!currentMoviePath.equals("") && !currentTVShowPath.equals("")) { // ensure a folder is actually selected
             serverController.startServerService(portNum, callback);
         }
     }
 
     public List<Context> createContextList(){
         List<Context> contextList = new ArrayList<>();
-        contextList.add(new Context(REFRESH_HANDLER_PATH, ServerMethodType.GET, new Notification(REFRESH_NOTIFICATION)));
-        contextList.add(new Context(GET_DATA_HANDLER_PATH, ServerMethodType.GET, new Notification(GET_NOTIFICATION)));
-        contextList.add(new Context(PATCH_FILE_FOLDER_PATH, ServerMethodType.PATCH, new Notification(UPDATE_MODEL)));
-        contextList.add(new Context(STREAM_PATH, ServerMethodType.POST, new Notification(STREAM_NOTIFICATION)));
-        contextList.add(new Context(GET_FAVORITES_PATH, ServerMethodType.GET, new Notification(FAVORITE_NOTIFICATION)));
-        contextList.add(new Context(AUTHENTICATE_PATH, ServerMethodType.POST, new Notification(AUTHENTICATION_NOTIFICATION)));
-        contextList.add(new Context(PING_PATH, ServerMethodType.GET, new Notification(PING)));
-        contextList.add(new Context(GET_TV_SHOW_PATHS, ServerMethodType.GET, new Notification(GET_TV_SHOW_NOTIFICATION)));
+        contextList.add(new Context(REFRESH_ALL_HANDLER_PATH, ServerMethodType.GET, new Notification(REFRESH_ALL_HANDLER_PATH)));
+        contextList.add(new Context(GET_DATA_HANDLER_PATH, ServerMethodType.GET, new Notification(GET_DATA_HANDLER_PATH)));
+        contextList.add(new Context(PATCH_FILE_FOLDER_PATH, ServerMethodType.PATCH, new Notification(PATCH_FILE_FOLDER_PATH)));
+        contextList.add(new Context(STREAM_PATH, ServerMethodType.POST, new Notification(STREAM_PATH)));
+        contextList.add(new Context(GET_FAVORITES_PATH, ServerMethodType.GET, new Notification(GET_FAVORITES_PATH)));
+        contextList.add(new Context(AUTHENTICATE_PATH, ServerMethodType.POST, new Notification(AUTHENTICATE_PATH)));
+        contextList.add(new Context(PING_PATH, ServerMethodType.GET, new Notification(PING_PATH)));
+        contextList.add(new Context(GET_TV_SHOW_PATHS, ServerMethodType.GET, new Notification(GET_TV_SHOW_PATHS)));
+        contextList.add(new Context(GET_MOVIES_PATH, ServerMethodType.GET, new Notification(GET_MOVIES_PATH)));
         return contextList;
     }
 
@@ -128,11 +138,11 @@ public class Controller implements ContextManager {
     @Override
     public void notificationReceived(Notification notification, Object obj, long id) {
         try {
-            if (notification.name().equals(PING)){
+            if (notification.name().equals(PING_PATH)){
                 handlePing(id);
             }
             System.out.println("Received notification " + notification.name());
-            if (notification.name().equals(AUTHENTICATION_NOTIFICATION)){
+            if (notification.name().equals(AUTHENTICATE_PATH)){
                 System.out.println("Authenticating");
             }
             else if (!authenticate(obj, id)){
@@ -142,13 +152,14 @@ public class Controller implements ContextManager {
                 System.out.println("Authenticated");
             }
             switch (notification.name()) {
-                case STREAM_NOTIFICATION -> handleFileStreamingRequested(obj, id);
-                case GET_NOTIFICATION -> handleGetData(id);
-                case UPDATE_MODEL -> handlePatchWithHash(obj, id);
-                case REFRESH_NOTIFICATION -> handleRefresh(id);
-                case FAVORITE_NOTIFICATION -> handleGetFavorites(id);
-                case AUTHENTICATION_NOTIFICATION -> handleAuthentication(obj, id);
-                case GET_TV_SHOW_NOTIFICATION -> handleGetTVShow(id);
+                case STREAM_PATH -> handleFileStreamingRequested(obj, id);
+                case GET_DATA_HANDLER_PATH -> handleGetData(id);
+                case PATCH_FILE_FOLDER_PATH -> handlePatchWithHash(obj, id);
+                case REFRESH_ALL_HANDLER_PATH -> handleRefresh(id);
+                case GET_FAVORITES_PATH -> handleGetFavorites(id);
+                case AUTHENTICATE_PATH -> handleAuthentication(obj, id);
+                case GET_TV_SHOW_PATHS -> handleGetTVShow(id);
+                case GET_MOVIES_PATH -> handleGetMovies(id);
                 default -> System.out.println("Incorrecto notification: " + notification.name() + " " + obj.toString() + " " + id);
             }
         }catch (Exception e){
@@ -156,9 +167,17 @@ public class Controller implements ContextManager {
         }
     }
 
+    private void handleGetMovies(long id) {
+        JSONObject response = new JSONObject();
+        response.put("message", "movies transfered successfully!");
+        response.put("folders", dataController.getMovies());
+        System.out.println(response.toString(5));
+        serverController.handleRequestResponse(id, response, 200);
+    }
+
     private void handleGetTVShow(long id) {
         JSONObject response = new JSONObject();
-        response.put("data", dataController.getTVShowData());
+        //response.put("data", dataController.getTVShowData());
         serverController.handleRequestResponse(id, response, 200);
     }
 
@@ -244,9 +263,9 @@ public class Controller implements ContextManager {
             boolean isFavorite = requestObject.getBoolean("isFavorite");
 
             if (type.equalsIgnoreCase(FileType.FILE.toString())){
-                updated = dataController.updateFileAtHash(hash, isFavorite, requestObject.getInt("playbackPosition"));
+                updated = dataController.updateMovieFileAtHash(hash, isFavorite, requestObject.getInt("playbackPosition"));
             }else if (type.equalsIgnoreCase(FileType.FOLDER.toString())){
-                updated = dataController.updateFolderAtHash(hash, isFavorite);
+                updated = dataController.updateMovieFolderAtHash(hash, isFavorite);
             }
             if (updated){
                 responseCode = 200;

@@ -6,13 +6,13 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MovieData extends Data {
+public class MovieData extends DefaultData {
 
     private final String title;
     private final String originalLanguage;
     private final String date;
     private final String description;
-    private final List<CastData> castDataList;
+    private List<CastData> castDataList;
     private final long budget;
     private final long boxOffice;
     private final int runtime;
@@ -90,6 +90,10 @@ public class MovieData extends Data {
        }
        object.put("cast", castArray);
        return object;
+    }
+
+    public void setCast(List<CastData> cast){
+        this.castDataList = cast;
     }
 
     public void addCast(CastData castData){

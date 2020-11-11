@@ -1,58 +1,44 @@
-package controller;
+package tmdbservices;
 
-import com.github.wtekiela.opensub4j.api.OpenSubtitlesClient;
 import com.uwetrottmann.tmdb2.Tmdb;
 import com.uwetrottmann.tmdb2.entities.*;
 import com.uwetrottmann.tmdb2.services.*;
+import interfaces.Data;
 import model.data.*;
 import retrofit2.Call;
 import retrofit2.Response;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TVDBData {
-
-    private static final String moviePosterPath = "http://image.tmdb.org/t/p/w500";
-    private static final String actorImagePath = "http://image.tmdb.org/t/p/w185";
-    private static final String backdropPosterPathSmall = "http://image.tmdb.org/t/p/w300";
-    private static final String backdropPosterPath = "http://image.tmdb.org/t/p/w1280";
-    private static final String episodeStillPath = "http://image.tmdb.org/t/p/w185";
-
-    private final Tmdb tmdb;
+public class TVDBData extends DefaultTMDBData {
+    private static final int castNum = 20;
     private final TvService tvService;
     private final TvSeasonsService seasonsService;
     private final TvEpisodesService episodesService;
     private final SearchService searchService;
-    OpenSubtitlesClient osClient;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
     private final ExecutorService executorService;
 
-    public TVDBData() {
-        tmdb = new Tmdb("173b789d94a7a1318de3aa759a1ddd79");
+
+    public TVDBData(String apiKey) {
+        super(apiKey, castNum);
         tvService = tmdb.tvService();
         searchService = tmdb.searchService();
         episodesService = tmdb.tvEpisodesService();
         seasonsService = tmdb.tvSeasonsService();
-
         executorService = Executors.newCachedThreadPool();
     }
 
 
-    public TVShowSearchData searchForTVID(String showTitle) {
-
-        //showTitle = "castle.2009.S03e06.1080p.hdtv.h264-mtb";
-
+    public TVShowSearchData search(String showTitle) {
         Pattern yearPattern = Pattern.compile("(.*)\\.(19|20\\d{2}).*[s|S](\\d+)[e|E](\\d+).*");
         Pattern noYearPattern = Pattern.compile("(.*)\\.[s|S](\\d+)[e|E](\\d+).*");
         Pattern formattedPattern = Pattern.compile("(.*)-.*[s|S](\\d+)[e|E](\\d+).*");
@@ -87,8 +73,6 @@ public class TVDBData {
             return new TVShowSearchData("na", -1, -1, -1);
         }
 
-
-        //System.out.println("name: " + name + " S" + season + "E" + episode);
         try {
             Response<TvShowResultsPage> tvShowResponse = tvSearchCall.execute();
 
@@ -104,7 +88,7 @@ public class TVDBData {
         return null;
     }
 
-    public TVShowData getTVDataFor(int id) {
+    public TVShowData findWithID(int id) {
         TVShowData data = null;
         Call<TvShow> tvCall = tvService.tv(id, null);
         try {
@@ -167,7 +151,7 @@ public class TVDBData {
         return backdrop;
     }
 
-    public Map<Integer, SeasonData> getSeasonsData(java.util.List<TvSeason> seasonList, int showID){
+    private Map<Integer, SeasonData> getSeasonsData(java.util.List<TvSeason> seasonList, int showID){
         Map<Integer, SeasonData> data = new HashMap<>(seasonList.size());
 
             for (TvSeason season : seasonList) {
@@ -193,7 +177,7 @@ public class TVDBData {
         return data;
     }
 
-    public Map<Integer, EpisodeData> getEpisodesData(int showID, int seasonNum, int episodeCount){
+    private Map<Integer, EpisodeData> getEpisodesData(int showID, int seasonNum, int episodeCount){
         Map<Integer, EpisodeData> data = new HashMap<>(episodeCount);
         for (int i = 1; i <= episodeCount; i++){
             final int currentEpisodeNum = i;
@@ -218,38 +202,13 @@ public class TVDBData {
         return data;
     }
 
-    public ArrayList<CastData> getCastEpisode(int id, int seasonNum, int episodeNum){
+    private java.util.List<CastData> getCastEpisode(int id, int seasonNum, int episodeNum){
         Call<Credits> creditsCall = episodesService.credits(id, seasonNum, episodeNum);
         return getCast(creditsCall);
     }
 
-    public ArrayList<CastData> getCastSeason(int id, int seasonNum) {
+    protected java.util.List<CastData> getCastSeason(int id, int seasonNum) {
         Call<Credits> creditsCall = seasonsService.credits(id, seasonNum);
         return getCast(creditsCall);
-    }
-
-    private ArrayList<CastData> getCast(Call<Credits> creditsCall){
-        ArrayList<CastData> data = new ArrayList<>();
-        try {
-            Credits credits = creditsCall.execute().body();
-            for (CastMember castMember : credits.cast) {
-                String name = castMember.name;
-                String character = castMember.character;
-                Integer order = castMember.order;
-                String profileImage = castMember.profile_path;
-                if (profileImage == null) {
-                    profileImage = "blank poster";
-                } else {
-                    profileImage = actorImagePath + profileImage;
-                }
-                data.add(new CastData(name, character, order, 0, profileImage));
-                if (order >= 20) {
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return data;
     }
 }

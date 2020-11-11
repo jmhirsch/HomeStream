@@ -1,14 +1,12 @@
 package model.data;
 
-import enums.DataType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class SeasonData extends Data {
+public class SeasonData extends DefaultData {
     private final String title;
     private final String overview;
     private final String airDate;

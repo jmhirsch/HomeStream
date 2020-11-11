@@ -2,11 +2,11 @@ package model.data;
 
 import org.json.JSONObject;
 
-public abstract class Data {
+public abstract class DefaultData implements interfaces.Data {
     protected final int id;
     protected final String image;
 
-    public Data(int id, String image){
+    public DefaultData(int id, String image){
         this.id = id;
         this.image = image;
     }
